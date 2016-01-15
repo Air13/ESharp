@@ -148,6 +148,7 @@ namespace SelfRanger
 			if (item.Name == "menurange_exp") menurange_exp = e.GetNewValue<bool>();
 			if (item.Name == "menurange_atck") menurange_atck = e.GetNewValue<bool>();
 			if (item.Name == "menurange_own") menurange_own = e.GetNewValue<bool>();
+			if (item.Name == "menurange_own2") menurange_own2 = e.GetNewValue<bool>();
 			
  
         }
@@ -159,7 +160,24 @@ namespace SelfRanger
         {
 			
 			
-		
+				if (menurange_atck)
+				{
+					if(rangedisplay_atck == null)
+					{
+					rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");	
+					range_atck = me.GetAttackRange() + 100;					
+					rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
+					rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
+					}
+					if (range_atck != (me.GetAttackRange() + 100))
+					{
+						range_atck = me.GetAttackRange() + 100;
+						rangedisplay_atck.Dispose();
+						rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
+						rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
+						rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
+					}
+				}
 			
 
 
@@ -179,18 +197,21 @@ namespace SelfRanger
 
 			
 			
-				if (menurange_dagger && _blink && !_alens)
+			
+			if (menurange_dagger)
+			{
+				if (_blink && !_alens)
 				{	
 					if(rangedisplay_dagger == null)
 					{
 					rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-					range_dagger = 1200 + 50 + 80;
+					range_dagger = 1200 + 130;
                     rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
 					rangedisplay_dagger.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
 					}
-					if (range_dagger != 1200 + 50 + 80)
+					if (range_dagger != 1200 + 130)
 					{
-						range_dagger = 1200 + 50 + 80;
+						range_dagger = 1200 + 130;
 						rangedisplay_dagger.Dispose();
 						rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
 						rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
@@ -198,54 +219,37 @@ namespace SelfRanger
 					}
 				}
 				
-				if (menurange_dagger && _blink && _alens)
+				if (_blink && _alens)
 				{	
 					if(rangedisplay_dagger == null)
 					{
 					rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-					range_dagger = 1200 + 50 + 80 + 200;
+					range_dagger = 1200 + 130 + 200;
                     rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
 					rangedisplay_dagger.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
 					}
-					if (range_dagger != 1200 + 50 + 80 + 200)
+					if (range_dagger != 1200 + 130 + 200)
 					{
-						range_dagger = 1200 + 50 + 80 + 200;
+						range_dagger = 1200 + 130 + 200;
 						rangedisplay_dagger.Dispose();
 						rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
 						rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
 						rangedisplay_dagger.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
 					}
 				}
-				if (menurange_dagger && !_blink)
+				if (!_blink)
 				{
 					rangedisplay_dagger.Dispose();
 					rangedisplay_dagger = null;
 				}
-				
+			}
 				
 
 
 
 				
 				
-				if (menurange_atck)
-				{
-					if(rangedisplay_atck == null)
-					{
-					rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");	
-					range_atck = me.GetAttackRange() + 100;					
-					rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
-					rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
-					}
-					if (range_atck != (me.GetAttackRange() + 100))
-					{
-						range_atck = me.GetAttackRange() + 100;
-						rangedisplay_atck.Dispose();
-						rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-						rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
-						rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
-					}
-				}
+
 		}
 		 
 
