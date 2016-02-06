@@ -6,7 +6,7 @@ using Ensage;
 using Ensage.Common;
 using Ensage.Common.Extensions;
 using Ensage.Common.Menu;
-
+using System.Windows.Input;
 
 using SharpDX;
 
@@ -16,7 +16,10 @@ namespace CourierOwner
     {
         private static readonly Menu Menu = new Menu("Courier Owner Air13","cb",true);
 		
-        private static bool following = false;
+		private static bool owned = false;
+        private static Key keyOWNED = Key.I;
+        private static Key toggleOWNED = Key.O;
+
 
         private static bool _loaded;
         private static Unit _fountain;
@@ -27,17 +30,17 @@ namespace CourierOwner
 			avoidenemy.AddItem(new MenuItem("AvoidEnemy.AvoidEnemy1", "Enable Avoid Enemy").SetValue(true).SetTooltip("Courier will use burst/haste if enemy in range"));
             avoidenemy.AddItem(new MenuItem("AvoidEnemy.Range", "Range").SetValue(new Slider(700, 100, 1000)));
 
-		
+			Menu.AddItem(new MenuItem("Selection", "Courier selection").SetValue(new KeyBind('I', KeyBindType.Press)));
+
             Menu.AddItem(new MenuItem("Abuse", "Bottle abuse").SetValue(new KeyBind('U', KeyBindType.Toggle, false)).SetTooltip("Courier pick items and abuse bottle for you (antireus indeed)"));
             Menu.AddItem(new MenuItem("Forced", "AntiReuse deliver").SetValue(new KeyBind('Y', KeyBindType.Toggle, false)).SetTooltip("Courier deliver items to you (antireus indeed)"));
-            //Menu.AddItem(new MenuItem("Forced", "Forced courier").SetValue(false).SetTooltip("Forced courier to bring items to you"));
-            Menu.AddItem(new MenuItem("Lock", "Stay ay fontain").SetValue(false).SetTooltip("Couriers stay at fountain (antireus indeed)"));
-            //Menu.AddItem(new MenuItem("AntiReuse", "Anti Reuse").SetValue(false));
+            Menu.AddItem(new MenuItem("Lock", "Stay at fontain").SetValue(false).SetTooltip("Couriers stay at fountain (antireus indeed)"));
             Menu.AddItem(new MenuItem("Cd", "Rate").SetValue(new Slider(50, 10, 300)));
 			
 			Menu.AddSubMenu(avoidenemy);
             Menu.AddToMainMenu();
 			
+			Game.OnWndProc += Game_OnWndProc;
 			Game.OnUpdate += Game_OnUpdate;
 			Drawing.OnDraw+=Drawing_OnDraw;
 
@@ -46,7 +49,27 @@ namespace CourierOwner
 		
 		
 		
+        private static void Game_OnWndProc(WndEventArgs args)
+        {
+            if (!Game.IsChatOpen)
+            {
+                if (Game.IsKeyDown(keyOWNED))
+                    owned = true;
+                else
+                {
+                    owned = false;
+                }
 
+                if (Game.IsKeyDown(toggleOWNED) && Utils.SleepCheck("toggle"))
+                {
+         
+                    Utils.Sleep(200, "toggle");
+                }
+
+
+
+            }
+        }
 		
 		
 		
@@ -56,11 +79,9 @@ namespace CourierOwner
 
             if (!Utils.SleepCheck("acd.cd"))
                 return;
-			if (!Utils.SleepCheck("nya"))
-                return;
 
-            //if (!Menu.Item("Lock").GetValue<bool>()/* && !Menu.Item("AntiReuse").GetValue<bool>()*/) 
-               // return;
+
+          
 
             var me = ObjectMgr.LocalHero;
 			var couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == me.Team);
@@ -69,7 +90,7 @@ namespace CourierOwner
 			
             if (!_loaded)
             {
-                if (!Game.IsInGame || me == null)
+                if (!Game.IsInGame || me == null || !me.IsAlive)
                 {
                     return;
                 }
@@ -94,6 +115,8 @@ namespace CourierOwner
                     .FirstOrDefault(x => x.Team == me.Team && x.ClassID == ClassID.CDOTA_Unit_Fountain);
             }
 			
+			
+			
 
 			
 			//avoid enemy
@@ -113,27 +136,33 @@ namespace CourierOwner
 							}
 						}
 					}
-					Utils.Sleep(200, "nya");
+                    Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
 					
 				}
 			
 			
-			
+				var courierfontain = ClosestToFontain();
+				var courierhero = ClosestToMyHero();
+				var couriermouse = ClosestToMouse();
+                var courierbottle = HavingBottle();
+
 			//anti reuse
 				foreach (var courier in couriers)
 				{
 					//Debug.Assert(_fountain != null, "_fountain != null");					
 					if (Menu.Item("Forced").GetValue<KeyBind>().Active)
-
 					{
-						if (me.Inventory.StashItems.Any())  
-							courier.Spellbook.SpellD.UseAbility();
-						else 
-							{
-							courier.Spellbook.SpellF.UseAbility();
-							courier.Spellbook.SpellQ.UseAbility(true);
-							}
-							
+                       
+							if (me.Inventory.StashItems.Any())
+                                courierfontain.Spellbook.SpellD.UseAbility();
+                            else if (courier.Inventory.Items.Any())
+								{
+								courier.Spellbook.SpellF.UseAbility();
+                                courier.Spellbook.SpellQ.UseAbility(true);
+								}
+                            //else if (courier.Inventory.FreeSlots.Any() && courier.Distance2D(_fountain) > 1000)
+                          
+
 					}
 
 					Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
@@ -164,7 +193,9 @@ namespace CourierOwner
 						var distance = me.Distance2D(courier);
 						
 						if (bottle == null && courBottle == null && courier.Distance2D(_fountain)>900)
+							{
 							courier.Spellbook.SpellQ.UseAbility();
+							}
 
 						if (distance > 200) 
 						{
@@ -172,37 +203,47 @@ namespace CourierOwner
 							{
 								//if (courier.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff")) 
 								//if (courier.Distance2D(_fountain)<courier.Distance2D(me))
-								if (courier.Distance2D(_fountain)<1100)
+								if (courier.Distance2D(_fountain)<1000)
 								{
-									courier.Spellbook.SpellD.UseAbility();
+                                   // courierfontain.Spellbook.SpellD.UseAbility();
 									
 
-								} 
-								
-								if (bottle != null && bottle.CurrentCharges < 3 && courier.Distance2D(_fountain) > courier.Distance2D(me))
-								{
-									courier.Follow(me);
 								}
-								if (bottle != null && bottle.CurrentCharges < 3 && courier.Distance2D(_fountain) < courier.Distance2D(me))
+
+                                if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) > courierhero.Distance2D(me))
 								{
-									courier.Spellbook.SpellQ.UseAbility();
+									courierhero.Follow(me);
 								}
+                                if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) < courierhero.Distance2D(me))
+								{
+                                    courierhero.Spellbook.SpellQ.UseAbility();
+								}
+
+                                if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) < 1000)
+                                {
+                                    courierhero.Spellbook.SpellD.UseAbility();
+                                }
 								
 								
 								if (courBottle != null && courBottle.CurrentCharges == 0) 
 								{
-									courier.Spellbook.SpellQ.UseAbility();
+									courierbottle.Spellbook.SpellQ.UseAbility();
 								}
+
+                                if (courBottle != null && courierbottle.Distance2D(_fountain) < 1000)
+                                {
+                                    courierbottle.Spellbook.SpellD.UseAbility();
+                                }
 								
 								//if (courBottle != null && courBottle.CurrentCharges == 3 && !courier.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff")) 
-								if (courBottle != null && courBottle.CurrentCharges == 3 && !(courier.Distance2D(_fountain)<courier.Distance2D(me))) 
+                                if (courBottle != null && courBottle.CurrentCharges == 3 && courierbottle.Distance2D(_fountain) > courierbottle.Distance2D(me)) 
 								{
-									courier.Follow(me);
+                                    courierbottle.Follow(me);
 								}
-								
-								if (courBottle != null && courBottle.CurrentCharges == 3 && !(courier.Distance2D(_fountain)>courier.Distance2D(me))) 
+
+                                if (courBottle != null && courBottle.CurrentCharges == 3 && courierbottle.Distance2D(_fountain) < courierbottle.Distance2D(me)) 
 								{
-									courier.Spellbook.SpellQ.UseAbility();
+                                    courierbottle.Spellbook.SpellQ.UseAbility();
 								}
 								
 								
@@ -211,38 +252,53 @@ namespace CourierOwner
 							{
 								if (bottle != null && bottle.CurrentCharges < 3)
 								{
-									courier.Follow(me);
+                                    courierhero.Follow(me);
 								}
 								if (bottle != null && bottle.CurrentCharges == 3)
 								{
-									courier.Spellbook.SpellQ.UseAbility();
+									courierhero.Spellbook.SpellQ.UseAbility();
 
 								}
-								if (courBottle != null && courBottle.CurrentCharges == 3) 
+                                if (courBottle != null && courBottle.CurrentCharges == 3) 
 								{
-									courier.Follow(me);
+                                    courierbottle.Follow(me);
 								}
 								if (courBottle != null && courBottle.CurrentCharges == 0) 
 								{
 									//courier.Spellbook.SpellD.UseAbility();
-									courier.Spellbook.SpellQ.UseAbility();
+                                    courierbottle.Spellbook.SpellQ.UseAbility();
 								}
 							}
 							
 						} 
 						else if (distance <= 200)
 						{
-							if (courBottle != null && courBottle.CurrentCharges == 3)
-								courier.Spellbook.SpellF.UseAbility();
-							else if (bottle.CurrentCharges == 0)
-								{
-								courier.Spellbook.SpellF.UseAbility();
+                            if (courBottle != null && courBottle.CurrentCharges == 3)
+                                courierhero.Spellbook.SpellF.UseAbility();
+                                //Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
+
+                            if (bottle != null && bottle.CurrentCharges > 0 && courier.Inventory.Items.Any())
+                            {
+                                courierhero.Spellbook.SpellF.UseAbility();
+                               // Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
+                            }	
+
+
+							if (bottle != null && bottle.CurrentCharges == 0)
+							{
 								me.Stop();
 								me.GiveItem(bottle, courier);
-								courier.Spellbook.SpellQ.UseAbility();
+                               // Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
+							}
 
-								
-								}					
+                            if (bottle == null && courBottle.CurrentCharges == 0)
+                            {
+                                courierbottle.Spellbook.SpellQ.UseAbility();
+                               // Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "acd.cd");
+
+                            }
+				
+
 						} 
 						
 				
@@ -259,13 +315,115 @@ namespace CourierOwner
 		
 		private static void Drawing_OnDraw(EventArgs args)
         {
-		if (Menu.Item("Forced").GetValue<KeyBind>().Active)
-			Drawing.DrawText("ANTIREUSE DELIVER", new Vector2((int) HUDInfo.ScreenSizeX()/2-100,100),new Vector2(26, 26), Color.Red, FontFlags.AntiAlias | FontFlags.DropShadow | FontFlags.Outline);
-		if (Menu.Item("Abuse").GetValue<KeyBind>().Active)
-			Drawing.DrawText("BOTTLE ABUSE", new Vector2((int) HUDInfo.ScreenSizeX()/2-80,130),new Vector2(26, 26), Color.Red, FontFlags.AntiAlias | FontFlags.DropShadow | FontFlags.Outline);
+			if (Menu.Item("Forced").GetValue<KeyBind>().Active)
+				Drawing.DrawText("ANTIREUSE DELIVER", new Vector2((int) HUDInfo.ScreenSizeX()/2-100,100),new Vector2(26, 26), Color.Red, FontFlags.AntiAlias | FontFlags.DropShadow);
+			if (Menu.Item("Abuse").GetValue<KeyBind>().Active)
+				Drawing.DrawText("BOTTLE ABUSE", new Vector2((int) HUDInfo.ScreenSizeX()/2-80,130),new Vector2(26, 26), Color.Cyan, FontFlags.AntiAlias | FontFlags.DropShadow);
+			/*
+			
+			var me = ObjectMgr.LocalHero;
+			var couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == me.Team);
+			
 		
-		
+			if (Game.IsKeyDown(Menu.Item("Selection").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
+				{
+				if (owned == false)
+					owned = true;
+				else owned = false;
+				}*/
+			
+			//foreach (var courier in couriers)
+			//var courier = ClosestToMyHero(me, 10000);
+			//var courier = ClosestToMouse();
+			if (Menu.Item("Abuse").GetValue<KeyBind>().Active)
+			{
+					var courier1 =  HavingBottle();
+					{
+					
+						
+						Vector2 screenPos;
+						var pos = courier1.Position + new Vector3(0, 0, courier1.HealthBarOffset);
+						Drawing.WorldToScreen(pos, out screenPos);
+						var textPos = screenPos + new Vector2(-35, 52);
+
+						Drawing.DrawText("Bottle!", textPos, new Vector2(21, 22), Color.Cyan, FontFlags.AntiAlias | FontFlags.DropShadow);
+					
+					}
+			}
+            
+			
+			
+          
+			
 		}
+		
+
+		
+		
+		public static Courier ClosestToMyHero()
+        {
+		
+			var myHero = ObjectMgr.LocalHero;
+            var Couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == myHero.Team);
+            Courier[] closestCourier = {null};
+            foreach (var cour in Couriers.Where(cour =>
+                            closestCourier[0] == null ||
+                            closestCourier[0].Distance2D(myHero.Position) > cour.Distance2D(myHero.Position)))
+            {
+                closestCourier[0] = cour;
+            }
+            return closestCourier[0];
+        }
+		
+		
+		public static Courier ClosestToFontain()
+        {
+		
+			var myHero = ObjectMgr.LocalHero;
+            var Couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == myHero.Team);
+            Courier[] closestCourier = {null};
+            foreach (var cour in Couriers.Where(cour =>
+                            closestCourier[0] == null ||
+                            closestCourier[0].Distance2D(_fountain.Position) > cour.Distance2D(_fountain.Position)))
+            {
+                closestCourier[0] = cour;
+            }
+            return closestCourier[0];
+        }
+		
+		
+		public static Courier ClosestToMouse()
+        {
+		
+			var myHero = ObjectMgr.LocalHero;
+            var mousePosition = Game.MousePosition;
+            var Couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == myHero.Team);
+            Courier[] closestCourier = {null};
+            foreach (var cour in Couriers.Where(cour =>
+                            closestCourier[0] == null ||
+                            closestCourier[0].Distance2D(mousePosition) > cour.Distance2D(mousePosition)))
+            {
+                closestCourier[0] = cour;
+            }
+            return closestCourier[0];
+        }
+
+        public static Courier HavingBottle()
+        {
+		
+			var myHero = ObjectMgr.LocalHero;
+            var Couriers = ObjectMgr.GetEntities<Courier>().Where(x => x.IsAlive && x.Team == myHero.Team);
+            Courier[] closestCourier = {null};
+            foreach (var cour in Couriers.Where(cour =>
+                            //closestCourier[0] == null ||
+                            cour.Inventory.Items.FirstOrDefault(x => x.Name == "item_bottle") != null ))
+            {
+                closestCourier[0] = cour;
+            }
+            return closestCourier[0];
+        }
+
+        //courBottle = courier.Inventory.Items.FirstOrDefault(x => x.Name == "item_bottle");
 		
 		
     }
