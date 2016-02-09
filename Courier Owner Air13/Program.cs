@@ -16,9 +16,9 @@ namespace CourierOwner
     {
         private static readonly Menu Menu = new Menu("Courier Owner Air13","cb",true);
 		
-		private static bool owned = false;
-        private static Key keyOWNED = Key.I;
-        private static Key toggleOWNED = Key.O;
+		//private static bool owned = false;
+        //private static Key keyOWNED = Key.I;
+        //private static Key toggleOWNED = Key.O;
 
 
         private static bool _loaded;
@@ -32,10 +32,11 @@ namespace CourierOwner
 
 			//Menu.AddItem(new MenuItem("Selection", "Courier selection").SetValue(new KeyBind('I', KeyBindType.Press)));
 
-            Menu.AddItem(new MenuItem("Abuse", "Bottle abuse").SetValue(new KeyBind('U', KeyBindType.Toggle, false)).SetTooltip("Courier deliver items and abuse bottle for you (antireus indeed)"));
-            Menu.AddItem(new MenuItem("Forced", "AntiReuse deliver").SetValue(new KeyBind('Y', KeyBindType.Toggle, false)).SetTooltip("Courier deliver items to you (antireus indeed)"));
+            Menu.AddItem(new MenuItem("Burst", "Auto burst by BA and AD").SetValue(true).SetTooltip("Enable auto burst while abusing bottle or delivering items to you"));
+            Menu.AddItem(new MenuItem("Abuse", "Bottle Abuse").SetValue(new KeyBind('U', KeyBindType.Toggle, false)).SetTooltip("Courier deliver items and abuse bottle for you (antireus indeed)"));
+            Menu.AddItem(new MenuItem("Forced", "Anti Reuse deliver").SetValue(new KeyBind('Y', KeyBindType.Toggle, false)).SetTooltip("Courier deliver items to you (antireus indeed)"));
             Menu.AddItem(new MenuItem("Lock", "Lock at fountain").SetValue(new KeyBind('I', KeyBindType.Toggle, false)).SetTooltip("Couriers lock at fountain (antireus indeed)"));
-            Menu.AddItem(new MenuItem("Cd", "Rate").SetValue(new Slider(100, 30, 300)));
+            Menu.AddItem(new MenuItem("Cd", "Rate").SetValue(new Slider(150, 30, 300)));
 			
 			Menu.AddSubMenu(avoidenemy);
             Menu.AddToMainMenu();
@@ -130,9 +131,9 @@ namespace CourierOwner
 						{
 						    if (enemy.Distance2D(courier) < (Menu.Item("AvoidEnemy.Range").GetValue<Slider>().Value))
 							{
-								var burst = courier.Spellbook.SpellR;
+                                var burst = courier.Spellbook.SpellR;
 								if (courier.IsFlying && burst.CanBeCasted())
-								burst.UseAbility();
+								    burst.UseAbility();
 							}
 						}
 					}
@@ -150,16 +151,27 @@ namespace CourierOwner
 				foreach (var courier in couriers)
 				{
 					//Debug.Assert(_fountain != null, "_fountain != null");					
-					if (Menu.Item("Forced").GetValue<KeyBind>().Active && !Menu.Item("Abuse").GetValue<KeyBind>().Active && !Menu.Item("Lock").GetValue<KeyBind>().Active)
+					if (Menu.Item("Forced").GetValue<KeyBind>().Active && !Menu.Item("Abuse").GetValue<KeyBind>().Active)
 					{
-                       
-							if (me.Inventory.StashItems.Any())
+                        
+
+
+                            if (me.Inventory.StashItems.Any())
+                            {
+                                var burst1 = courierfontain.Spellbook.SpellR;
+                                if (Menu.Item("Burst").GetValue<bool>() && courierfontain.IsFlying && burst1.CanBeCasted())
+                                    burst1.UseAbility();
                                 courierfontain.Spellbook.SpellD.UseAbility();
+                                
+                            }
                             else if (courier.Inventory.Items.Any())
-								{
-								courier.Spellbook.SpellF.UseAbility();
+                            {
+
+                                courier.Spellbook.SpellF.UseAbility();
                                 courier.Spellbook.SpellQ.UseAbility(true);
-								}
+                            }
+
+                            
                             //else if (courier.Inventory.FreeSlots.Any() && courier.Distance2D(_fountain) > 1000)
                           
 
@@ -172,7 +184,7 @@ namespace CourierOwner
 				//lock at base
 				foreach (var courier in couriers.Where(courier => courier.Distance2D(_fountain) > 900))
 				{
-					if (Menu.Item("Lock").GetValue<KeyBind>().Active) 
+					if (Menu.Item("Lock").GetValue<KeyBind>().Active && !Menu.Item("Forced").GetValue<KeyBind>().Active && !Menu.Item("Abuse").GetValue<KeyBind>().Active) 
 						courier.Spellbook.SpellQ.UseAbility();
 	
 					Utils.Sleep(Menu.Item("Cd").GetValue<Slider>().Value, "rate");
@@ -186,11 +198,15 @@ namespace CourierOwner
 				{
 					
 					
-					if (Menu.Item("Abuse").GetValue<KeyBind>().Active && !Menu.Item("Lock").GetValue<KeyBind>().Active)
+					if (Menu.Item("Abuse").GetValue<KeyBind>().Active)
 					{
 						var bottle = me.Inventory.Items.FirstOrDefault(x => x.Name == "item_bottle");
 						var courBottle = courier.Inventory.Items.FirstOrDefault(x => x.Name == "item_bottle");
+                        var courOtherItems = courier.Inventory.Items.FirstOrDefault(x => x.Name != "item_bottle");
+
 						var distance = me.Distance2D(courier);
+
+                        
 						
 						/*
 						if (bottle == null && courBottle == null && me.Inventory.StashItems.FirstOrDefault(x => x.Name == "item_bottle") == null && courier.Distance2D(_fountain)>900)
@@ -205,6 +221,9 @@ namespace CourierOwner
 
 						if (distance > 200) 
 						{
+                            var burst2 = courierhero.Spellbook.SpellR;
+                            var burst3 = courierhero.Spellbook.SpellR;
+
 							if (me.Inventory.StashItems.Any()) 
 							{
 								//if (courier.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff")) 
@@ -222,37 +241,51 @@ namespace CourierOwner
                                 if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) > courierhero.Distance2D(me))
 								{
 									courierhero.Follow(me);
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierhero.IsFlying && burst2.CanBeCasted())
+                                        burst2.UseAbility();
 								}
                                 if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) < courierhero.Distance2D(me))
 								{
                                     courierhero.Spellbook.SpellQ.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierhero.IsFlying && burst2.CanBeCasted())
+                                        burst2.UseAbility();
 								}
 
                                 if (bottle != null && bottle.CurrentCharges < 3 && courierhero.Distance2D(_fountain) < 1000)
                                 {
                                     courierhero.Spellbook.SpellD.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierhero.IsFlying && burst2.CanBeCasted())
+                                        burst2.UseAbility();
                                 }
 								
 								
 								if (courBottle != null && courBottle.CurrentCharges == 0) 
 								{
 									courierbottle.Spellbook.SpellQ.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 								}
 
                                 if (courBottle != null && courierbottle.Distance2D(_fountain) < 1000)
                                 {
                                     courierbottle.Spellbook.SpellD.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
                                 }
 								
 								//if (courBottle != null && courBottle.CurrentCharges == 3 && !courier.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff")) 
                                 if (courBottle != null && courBottle.CurrentCharges == 3 && courierbottle.Distance2D(_fountain) > courierbottle.Distance2D(me)) 
 								{
                                     courierbottle.Follow(me);
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 								}
 
                                 if (courBottle != null && courBottle.CurrentCharges == 3 && courierbottle.Distance2D(_fountain) < courierbottle.Distance2D(me)) 
 								{
                                     courierbottle.Spellbook.SpellQ.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 								}
 								
 								
@@ -262,20 +295,28 @@ namespace CourierOwner
 								if (bottle != null && bottle.CurrentCharges < 3)
 								{
                                     courierhero.Follow(me);
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierhero.IsFlying && burst2.CanBeCasted())
+                                        burst2.UseAbility();
 								}
 								if (bottle != null && bottle.CurrentCharges == 3)
 								{
 									courierbottle.Spellbook.SpellQ.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 
 								}
                                 if (courBottle != null && courBottle.CurrentCharges == 3) 
 								{
                                     courierbottle.Follow(me);
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 								}
 								if (courBottle != null && courBottle.CurrentCharges == 0) 
 								{
 									//courier.Spellbook.SpellD.UseAbility();
                                     courierbottle.Spellbook.SpellQ.UseAbility();
+                                    if (Menu.Item("Burst").GetValue<bool>() && courierbottle.IsFlying && burst3.CanBeCasted())
+                                        burst3.UseAbility();
 								}
 							}
 							
@@ -283,10 +324,12 @@ namespace CourierOwner
 						else if (distance <= 200)
 						{
                             if (courBottle != null && courBottle.CurrentCharges == 3)
-                                courierhero.Spellbook.SpellF.UseAbility();
+								courierhero.GiveItem(courBottle, me);
+                                //courierhero.Spellbook.SpellF.UseAbility();
 
                             if (bottle != null && bottle.CurrentCharges > 0 && courier.Inventory.Items.Any())
                             {
+                                //if (me.Inventory.FreeSlots == null)
                                 courierhero.Spellbook.SpellF.UseAbility();
                             }	
 
@@ -297,10 +340,21 @@ namespace CourierOwner
 								me.GiveItem(bottle, courier);
 							}
 
-                            if (bottle == null && courBottle.CurrentCharges == 0)
+                            if (bottle == null && courBottle.CurrentCharges == 0 && courOtherItems != null)
+                            {
+                                    courierhero.GiveItem(courOtherItems, me);                                              
+                            }
+
+                            if (bottle == null && courBottle.CurrentCharges == 0 && courOtherItems == null)
                             {
                                 courierhero.Spellbook.SpellQ.UseAbility();
                             }
+
+                            if (bottle != null && courBottle == null && courOtherItems == null)
+                            {
+                                courierhero.Spellbook.SpellQ.UseAbility();
+                            }
+                            
 				
 
 						} 
