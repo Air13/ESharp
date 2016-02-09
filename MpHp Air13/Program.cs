@@ -40,12 +40,17 @@
                 Drawing.DrawRect(start + new Vector2(-1, -1), size + new Vector2(3, 3), Color.Black, true);
                 var text = string.Format("{0}", (int)enemy.Mana);
 				var text2 = string.Format("{0}", (int)enemy.Health);
-                var textSize = Drawing.MeasureText(text, "segoeui", new Vector2(size.Y * 2, size.X), FontFlags.AntiAlias);
-				var textSize2 = Drawing.MeasureText(text2, "segoeui", new Vector2(size.Y * 2, size.X), FontFlags.AntiAlias);
-                var textPos = start + new Vector2(size.X / 2 - textSize.X / 2, -textSize.Y / 2 + 13);
-				var textPos2 = start + new Vector2(size.X / 2 - textSize2.X / 2, -textSize2.Y / 2 - 25);
-                Drawing.DrawText(text,textPos,new Vector2(size.Y * 7/2 , size.X * 5/2),Color.White,FontFlags.AntiAlias | FontFlags.DropShadow);
-				Drawing.DrawText(text2,textPos2,new Vector2(size.Y * 7/2 , size.X * 5/2),Color.White,FontFlags.AntiAlias | FontFlags.DropShadow);
+                var textPos = start + new Vector2(40,9);
+				var textPosShad = start + new Vector2(41,9);
+				var textPos2 = start + new Vector2(40, -34);
+				var textPos2Shad = start + new Vector2(41, -33);
+				
+                
+				Drawing.DrawText(text,textPosShad,new Vector2(21, 20),Color.Black,FontFlags.AntiAlias | FontFlags.DropShadow);
+				Drawing.DrawText(text,textPos,new Vector2(21, 20),Color.White,FontFlags.AntiAlias | FontFlags.DropShadow);
+				
+				Drawing.DrawText(text2,textPos2Shad,new Vector2(21, 21),Color.Black,FontFlags.AntiAlias | FontFlags.DropShadow);
+				Drawing.DrawText(text2,textPos2,new Vector2(21, 21),Color.White,FontFlags.AntiAlias | FontFlags.DropShadow);
 			}
         }
 
