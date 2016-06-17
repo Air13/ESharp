@@ -54,7 +54,8 @@ namespace Tinker_Air13
             "item_blink",
             "item_bottle",
             "item_veil_of_discord",
-			"item_ghost"
+			"item_ghost",
+			"item_shivas_guard"
 			};			
 			
         private static int[] laser_damage = new int[4] { 80, 160, 240, 320 };
@@ -63,7 +64,7 @@ namespace Tinker_Air13
         private static int[] laser_mana = new int[4] { 95, 120, 145, 170 };
 		private static int[] rocket_mana = new int[4] { 120, 140, 160, 180 };	
 		private static int[] rearm_mana = new int[3] { 100, 200, 300 };	
-		private static int dagon_mana = 180, veil_mana = 50, sheep_mana = 100, ethereal_mana = 100, shiva_mana = 180;
+		private static int dagon_mana = 180, veil_mana = 50, sheep_mana = 100, ethereal_mana = 100, shiva_mana = 100;
 		
 		private static int aetherrange = 0;
         private static double allmult = 1;
@@ -387,8 +388,8 @@ namespace Tinker_Air13
 							elsecount += 1;
 						*/
 						if (sheep != null && sheep.CanBeCasted() 
-							&& !target.UnitState.HasFlag(UnitState.Hexed) 
-							&& !target.UnitState.HasFlag(UnitState.Stunned) 
+							//&& !target.UnitState.HasFlag(UnitState.Hexed) 
+							//&& !target.UnitState.HasFlag(UnitState.Stunned) 
 							&& magicimune 
 							&& (!EzkillCheck || (target.FindItem("item_manta") != null && target.FindItem("item_manta").CanBeCasted()) || (target.FindItem("item_black_king_bar") != null && target.FindItem("item_black_king_bar").CanBeCasted()) )
 							&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange
