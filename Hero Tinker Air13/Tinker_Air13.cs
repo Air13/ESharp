@@ -97,6 +97,8 @@ namespace Tinker_Air13
 
 			var _settings = new Menu("Settings", "Settings UI");
             Menu.AddSubMenu(_settings);
+			_settings.AddItem(new MenuItem("HitCounter", "Enable Hit counter").SetValue(true));
+			_settings.AddItem(new MenuItem("TargetCalculator", "Enable target dmg calculator").SetValue(true));
 			_settings.AddItem(new MenuItem("Calculator", "Enable UI calculator").SetValue(true));
             _settings.AddItem(new MenuItem("BarPosX", "Position X").SetValue(new Slider(600, -1500, 1500)));
             _settings.AddItem(new MenuItem("BarPosY", "Position Y").SetValue(new Slider(0, -1500, 1500)));
@@ -206,7 +208,7 @@ namespace Tinker_Air13
 
 				FindItems();
 
-				if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling()  && Utils.SleepCheck("Rearms") && (me.Distance2D(Game.MousePosition) > 700))
+				if (blink != null && blink.CanBeCasted() && !me.IsChanneling()  && Utils.SleepCheck("Rearms") && (me.Distance2D(Game.MousePosition) > 700))
 				{
 					var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
 					var p = Game.MousePosition;
@@ -248,13 +250,13 @@ namespace Tinker_Air13
 				var enemies = ObjectMgr.GetEntities<Hero>().Where(x => x.IsVisible && x.IsAlive && x.Team == me.GetEnemyTeam() && !x.IsIllusion);
 				foreach (var e in enemies)
 				{
-					if (Rocket != null && Rocket.CanBeCasted() && (e != null && me.Distance2D(e) < 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled("item_blink")) && !me.IsChanneling() && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
+					if (Rocket != null && Rocket.CanBeCasted() && (e != null && me.Distance2D(e) < 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && !me.IsChanneling() && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
 					{
 						Rocket.UseAbility();
 					}
 				
 				
-					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) || e == null || me.Distance2D(e) >= 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled("item_blink")) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling()&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) || e == null || me.Distance2D(e) >= 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling()&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
 					{
 						Refresh.UseAbility();
 						if (Refresh.Level == 1)
@@ -266,7 +268,7 @@ namespace Tinker_Air13
 
 					}
                 }
-                if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (blink == null || !blink.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled("item_blink")) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+                if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (blink == null || !blink.CanBeCasted() ) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
 				{
 					Refresh.UseAbility();
 					if (Refresh.Level == 1)
@@ -366,7 +368,7 @@ namespace Tinker_Air13
 					
 
 					
-					if (Utils.SleepCheck("FASTCOMBO") && !me.IsChanneling())
+					if (Utils.SleepCheck("FASTCOMBO") && !me.IsChanneling() )
 					{
 						uint elsecount = 0;
 						bool EzkillCheck = EZkill(target);
@@ -376,7 +378,9 @@ namespace Tinker_Air13
 
 						
 						
-						if (soulring != null && soulring.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)  )
+						if (soulring != null && soulring.CanBeCasted() 
+							&& target.NetworkPosition.Distance2D(me) <= 2500 
+							&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)  )
 						{
 							soulring.UseAbility();
 						}
@@ -394,7 +398,7 @@ namespace Tinker_Air13
                         {
                             blink.UseAbility(Game.MousePosition);
                         }*/
-						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling() && (me.Distance2D(Game.MousePosition) > 650+aetherrange) )// && Utils.SleepCheck("Rearms"))
+						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling()  && (me.Distance2D(Game.MousePosition) > 600+aetherrange)  && (target.NetworkPosition.Distance2D(me) <= 1200 + 600 +aetherrange*2))// && Utils.SleepCheck("Rearms"))
 						{
 							var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
 							var p13 = Game.MousePosition;
@@ -415,7 +419,41 @@ namespace Tinker_Air13
 							blink.UseAbility(p13);
 							//Utils.Sleep(250, "Blinks");
 
-						}						
+						}
+						/*
+						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling()  &&  me.NetworkPosition.Distance2D(target.NetworkPosition) > 600+aetherrange)// && Utils.SleepCheck("Rearms"))
+						{
+							var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
+							var closeRange = me.FindItem("item_aether_lens") == null ? 600 : 800;
+							var p13 = Game.MousePosition;
+							
+							if (me.NetworkPosition.Distance2D(target.NetworkPosition) > safeRange + closeRange)
+							{
+								var tpos = me.NetworkPosition;
+								var a = tpos.ToVector2().FindAngleBetween(target.NetworkPosition.ToVector2(), true);
+								
+								safeRange -= (int)me.HullRadius;
+								p13 = new Vector3(
+									tpos.X + (safeRange + closeRange)  * (float)Math.Cos(a),
+									tpos.Y + (safeRange + closeRange) * (float)Math.Sin(a),
+									100);
+							}
+							else 
+							{
+								var tpos = me.NetworkPosition;
+								var a = tpos.ToVector2().FindAngleBetween(target.NetworkPosition.ToVector2(), true);
+								var uncloseRange = me.NetworkPosition.Distance2D(target.NetworkPosition) - closeRange;
+								
+								safeRange -= (int)me.HullRadius;
+								p13 = new Vector3(
+									tpos.X + uncloseRange * (float)Math.Cos(a),
+									tpos.Y + uncloseRange * (float)Math.Sin(a),
+									100);							
+							}
+							blink.UseAbility(p13);
+							//Utils.Sleep(250, "Blinks");
+
+						}*/						
 						else
 							elsecount += 1;
 							
@@ -486,7 +524,9 @@ namespace Tinker_Air13
 							else
 								elsecount += 1;		
 								
-							if (ghost != null && ethereal == null && ghost.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name) )
+							if (ghost != null && ethereal == null && ghost.CanBeCasted() 
+								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange
+								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name) )
 							{
 								ghost.UseAbility();
 							}
@@ -1921,20 +1961,31 @@ namespace Tinker_Air13
             FindItems();
             if (target != null && target.IsValid && !target.IsIllusion && target.IsAlive && target.IsVisible)
             {
-				var start = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 50);
-				var starts = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 49);
-				var start2 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 70);
-				var start2s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 69);
-				var start3 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 90);
-				var start3s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 89);
-				Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), starts, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-                Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), start, new Vector2(21, 21), EZkill(target) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-                Drawing.DrawText(procastdamage.ToString(), start2s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-                Drawing.DrawText(procastdamage.ToString(), start2, new Vector2(21, 21), (target.Health < procastdamage) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-                Drawing.DrawText(factdamage(target).ToString(), start3s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-                Drawing.DrawText(factdamage(target).ToString(), start3, new Vector2(21, 21), (target.Health < factdamage(target)) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-
-
+				if (Menu.Item("TargetCalculator").GetValue<bool>())
+				{	
+					var start = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 50);
+					var starts = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 49);
+					var start2 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 70);
+					var start2s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 69);
+					var start3 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 90);
+					var start3s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 89);
+					Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), starts, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), start, new Vector2(21, 21), EZkill(target) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(procastdamage.ToString(), start2s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(procastdamage.ToString(), start2, new Vector2(21, 21), (target.Health < procastdamage) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(factdamage(target).ToString(), start3s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(factdamage(target).ToString(), start3, new Vector2(21, 21), (target.Health < factdamage(target)) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+				}
+				if (Menu.Item("HitCounter").GetValue<bool>())
+				{	
+					var cleardmg = me.BonusDamage + me.DamageAverage;
+					var hitDmg = target.DamageTaken(cleardmg, DamageType.Physical, me);
+					var hitcounter = Math.Ceiling((target.Health - procastdamage)/hitDmg);
+					var starthit = HUDInfo.GetHPbarPosition(target) + new Vector2(107, HUDInfo.GetHpBarSizeY(target) - 13);
+					var starthits = HUDInfo.GetHPbarPosition(target) + new Vector2(108, HUDInfo.GetHpBarSizeY(target) - 12);
+					Drawing.DrawText(hitcounter.ToString()+" hits", starthits, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(hitcounter.ToString()+" hits", starthit, new Vector2(21, 21), Color.White, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+				}
 			}  
 			
 			if (Menu.Item("Calculator").GetValue<bool>())
