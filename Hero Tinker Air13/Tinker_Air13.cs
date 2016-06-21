@@ -18,6 +18,8 @@ namespace Tinker_Air13
         private static Ability Laser, Rocket, Refresh, March;
         private static Item blink, dagon, sheep, soulring, ethereal, shiva, ghost, cyclone, forcestaff, glimmer, bottle, travel, veil, aether, atos;
         private static Hero me, target;
+        private static List<Hero> Alies;
+		
         private static readonly Menu Menu = new Menu("Tinker Air13", "Tinker Air13", true, "npc_dota_hero_tinker", true);
         private static readonly Menu _skills = new Menu("Skills", "Skills");
         private static readonly Menu _items = new Menu("Items", "Items");
@@ -80,8 +82,8 @@ namespace Tinker_Air13
         {
             // Menu Options
             Menu.AddItem(new MenuItem("Combo Key", "Combo Key").SetValue(new KeyBind('D', KeyBindType.Press)));
-            Menu.AddItem(new MenuItem("Rocket Spam Key", "Rocket Spam Key").SetValue(new KeyBind('D', KeyBindType.Press)));
-            Menu.AddItem(new MenuItem("March Spam Key", "March Spam Key").SetValue(new KeyBind('F', KeyBindType.Press)));
+            Menu.AddItem(new MenuItem("Rocket Spam Key", "Rocket Spam Key").SetValue(new KeyBind('F', KeyBindType.Press)));
+            Menu.AddItem(new MenuItem("March Spam Key", "March Spam Key").SetValue(new KeyBind('E', KeyBindType.Press)));
 
 			Menu.AddItem(new MenuItem("autoDisable", "Auto disable/counter enemy").SetValue(true));
 			Menu.AddItem(new MenuItem("autoKillsteal", "Auto killsteal enemy").SetValue(true));
@@ -202,6 +204,9 @@ namespace Tinker_Air13
                 return;
             if (me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
                 return;
+				
+
+				
 				
 			if (Game.IsKeyDown(Menu.Item("Rocket Spam Key").GetValue<KeyBind>().Key) && Utils.SleepCheck("RocketSpam") && !Game.IsChatOpen)
             {
@@ -716,7 +721,16 @@ namespace Tinker_Air13
 			else
 				aetherrange = 200;
 
-
+			if (bottle != null && !me.IsInvisible() && !me.IsChanneling() && me.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) && Utils.SleepCheck("bottle1"))
+			{
+				if(!me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && (me.Health < me.MaximumHealth || me.Mana < me.MaximumMana))
+					bottle.UseAbility();
+				Alies = ObjectMgr.GetEntities<Hero>().Where(x => x.Team == me.Team && x != me && (x.Health < x.MaximumHealth || x.Mana < x.MaximumMana) && !x.Modifiers.Any(y => y.Name == "modifier_bottle_regeneration") && x.IsAlive && !x.IsIllusion && x.Distance2D(me) <= bottle.CastRange).ToList();
+				foreach (Hero v in Alies)
+					if (v != null)
+						bottle.UseAbility(v);
+				Utils.Sleep(255, "bottle1");
+			}
 				
 
 			var enemies = ObjectMgr.GetEntities<Hero>().Where(x => x.IsVisible && x.IsAlive && x.Team == me.GetEnemyTeam() && !x.IsIllusion);
@@ -747,8 +761,12 @@ namespace Tinker_Air13
 						{ 
 							if (atos != null && atos.CanBeCasted())
 								atos.UseAbility(e);
-							else if (me.Spellbook.SpellE != null && me.Spellbook.SpellE.CanBeCasted())
+							else if (me.Spellbook.SpellQ != null && me.Spellbook.SpellQ.CanBeCasted())
 								me.Spellbook.SpellQ.UseAbility(e);
+							else if (ethereal != null && ethereal.CanBeCasted())
+								ethereal.UseAbility(e);
+							else if (dagon != null && dagon.CanBeCasted())
+								dagon.UseAbility(e);
 							else if ((sheep != null && sheep.CanBeCasted()) && (cyclone != null && cyclone.CanBeCasted()))
 								sheep.UseAbility(e);
 							//else if (cyclone != null && cyclone.CanBeCasted())
@@ -789,6 +807,7 @@ namespace Tinker_Air13
 						&& me.Distance2D(e) <= 800 + 50 + aetherrange
 						&& !e.Modifiers.Any(y => y.Name == "modifier_eul_cyclone")
 						&& !e.IsSilenced()
+						&& !e.IsMagicImmune()
 						&& !e.IsLinkensProtected()
 						&& !e.Modifiers.Any(y => y.Name == "modifier_teleporting")
 						&& Utils.SleepCheck(e.Handle.ToString())
@@ -980,6 +999,7 @@ namespace Tinker_Air13
 						&& (sheep == null || !sheep.CanBeCasted() || e.IsLinkensProtected())
 						&& me.Distance2D(e) <= 575+50+aetherrange
 						&& !e.IsHexed()
+						&& !e.IsMagicImmune()
 						&& !e.IsSilenced()
 						&& !e.Modifiers.Any(y => y.Name == "modifier_skywrath_mystic_flare_aura_effect")
 
@@ -1170,16 +1190,63 @@ namespace Tinker_Air13
 					}
 					
 					
+					
+					
+					//Laser dodge close enemy
+					if (
+										Laser != null
+										&& Laser.CanBeCasted()
+										&& (sheep == null || !sheep.CanBeCasted())
+										&& !me.IsAttackImmune()
+										&& !e.IsHexed()
+										&& !e.IsMagicImmune()
+										&& angle <= 0.03
+										&& ( (e.IsMelee && me.Position.Distance2D(e) < 350)
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Nevermore
+											|| (e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && IsCasted(e.Spellbook.SpellR))// && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
+											)
+										&& e.IsAttacking() 
+										&& Utils.SleepCheck("Ghost"))
+									{
+										Laser.UseAbility(e);
+										Utils.Sleep(150, "Ghost");
+									}
+									/*
+									else if (Laser != null
+											&& Laser.CanBeCasted()
+											&& !me.IsAttackImmune()
+											&& e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && IsCasted(e.Spellbook.SpellR)//&& e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire")
+											//&& e.IsAttacking() 
+										   && angle <= 0.03
+											&& Utils.SleepCheck("Ghost")
+											)
+									{
+										ghost.UseAbility();
+										Utils.Sleep(150, "Ghost");
+									}*/
+					
+					
+					
+					
+					
+					
 
 					//ghost dodge close enemy
 					if (
 										ghost != null
 										&& ghost.CanBeCasted()
 										&& (sheep == null || !sheep.CanBeCasted())
-										&& me.Position.Distance2D(e) < 350 
+										&& (Laser == null || !Laser.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_juggernaut_omnislash"))
 										&& !me.IsAttackImmune()
+										&& !e.IsHexed()
+										&& (!e.Modifiers.Any(y => y.Name == "modifier_tinker_laser_blind") || e.Modifiers.Any(y => y.Name == "modifier_juggernaut_omnislash"))
 										&& angle <= 0.03
-										&& (e.IsMelee
+										&& ((e.IsMelee && me.Position.Distance2D(e) < 350)
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Tiny
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Shredder
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Nyx_Assassin
@@ -1191,18 +1258,17 @@ namespace Tinker_Air13
 											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz
 											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver
 											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Nevermore
-											|| e.Modifiers.Any(y => y.Name == "modifier_juggernaut_omnislash")
-											//|| (e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
+											//|| e.Modifiers.Any(y => y.Name == "modifier_juggernaut_omnislash")
+											|| (e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && IsCasted(e.Spellbook.SpellR))// && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
 
 											)
-										
 										&& e.IsAttacking() 
 										&& Utils.SleepCheck("Ghost"))
 									{
 										ghost.UseAbility();
 										Utils.Sleep(150, "Ghost");
 									}
+									/*
 									else if (ghost != null
 											&& ghost.CanBeCasted()
 											&& !me.IsAttackImmune()
@@ -1214,13 +1280,14 @@ namespace Tinker_Air13
 									{
 										ghost.UseAbility();
 										Utils.Sleep(150, "Ghost");
-									}
+									}*/
 									
 								
 					//cyclone dodge attacking close enemy		
 					if (
 										(ghost == null || !ghost.CanBeCasted())
 										&& (sheep == null || !sheep.CanBeCasted())
+										&& (Laser == null || !Laser.CanBeCasted())
 										//&& (me.Spellbook.SpellE == null || !me.Spellbook.SpellE.CanBeCasted())
 
 										&& cyclone != null 
@@ -1228,6 +1295,7 @@ namespace Tinker_Air13
 										&& me.Distance2D(e) <= 575 + 50 + aetherrange
 										&& !me.IsAttackImmune()
 										&& !e.IsHexed()
+										&& !e.Modifiers.Any(y => y.Name == "modifier_tinker_laser_blind")
 										&& !e.Modifiers.Any(y => y.Name == "modifier_skywrath_mystic_flare_aura_effect")
 
 										&& angle <= 0.03
@@ -1253,6 +1321,7 @@ namespace Tinker_Air13
 					else if ( //если цель под ультой ская
 									(ghost == null || !ghost.CanBeCasted())
 									&& (sheep == null || !sheep.CanBeCasted())
+									&& (Laser == null || !Laser.CanBeCasted())
 						//&& (me.Spellbook.SpellE == null || !me.Spellbook.SpellE.CanBeCasted())
 									&& cyclone != null
 									&& cyclone.CanBeCasted()
@@ -1312,6 +1381,7 @@ namespace Tinker_Air13
 
 									else if ( // Если ВРка
 											(ghost == null || !ghost.CanBeCasted())
+											&& (Laser == null || !Laser.CanBeCasted())
 											&& cyclone != null 
 											&& cyclone.CanBeCasted()
 											&& !me.IsAttackImmune()
