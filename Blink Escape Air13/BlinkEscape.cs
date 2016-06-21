@@ -33,6 +33,7 @@ namespace BlinkEscape
 
             Menu.AddItem(new MenuItem("Blink Key", "Blink Key").SetValue(new KeyBind('D', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("Auto Escape", "Auto Escape")).SetValue(true);
+            Menu.AddItem(new MenuItem("Dodge Initiators", "Dodge Initiators")).SetValue(true);
             Menu.AddSubMenu(_ranges);
             _ranges.AddItem(new MenuItem("Blink Range", "Show Blink Dagger Range").SetValue(true));
             _ranges.AddItem(new MenuItem("Show Direction", "Show Direction Vector on Channeling/Astral").SetValue(true));
@@ -198,7 +199,7 @@ namespace BlinkEscape
 
 
                     else if (
-						e.FindItem("item_blink") != null && me.Distance2D(e) <= 600 && e.FindItem("item_blink").Cooldown > 11 && IsCasted(e.FindItem("item_blink"))// && e.FindItem("item_blink").Cooldown > 11
+						e.FindItem("item_blink") != null && me.Distance2D(e) <= 600 && e.FindItem("item_blink").Cooldown > 11 && IsCasted(e.FindItem("item_blink")) && Menu.Item("Dodge Initiators").GetValue<bool>()// && e.FindItem("item_blink").Cooldown > 11
 						|| e.ClassID == ClassID.CDOTA_Unit_Hero_Enigma && e.Spellbook.SpellR.IsInAbilityPhase && me.Distance2D(e) <= 700 
 						|| e.ClassID == ClassID.CDOTA_Unit_Hero_FacelessVoid && e.FindSpell("faceless_void_chronosphere").IsInAbilityPhase && me.Distance2D(e) <= 1050
 						|| e.ClassID == ClassID.CDOTA_Unit_Hero_Magnataur && e.FindSpell("magnataur_reverse_polarity").IsInAbilityPhase && me.Distance2D(e) <= 450
