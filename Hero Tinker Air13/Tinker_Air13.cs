@@ -80,6 +80,12 @@ namespace Tinker_Air13
 
         static void Main(string[] args)
         {
+            me = ObjectMgr.LocalHero;
+            if (me == null)
+                return;
+            if (me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
+                return;
+		
             // Menu Options
             Menu.AddItem(new MenuItem("Combo Key", "Combo Key").SetValue(new KeyBind('D', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("Rocket Spam Key", "Rocket Spam Key").SetValue(new KeyBind('F', KeyBindType.Press)));
@@ -87,6 +93,8 @@ namespace Tinker_Air13
 
 			Menu.AddItem(new MenuItem("autoDisable", "Auto disable/counter enemy").SetValue(true));
 			Menu.AddItem(new MenuItem("autoKillsteal", "Auto killsteal enemy").SetValue(true));
+			Menu.AddItem(new MenuItem("autoSoulring", "Auto SoulRing by manual spell usage").SetValue(true).SetTooltip("Disable it if you have some bugs with rearming or use other auto soulring/items assemblies"));
+
             Menu.AddSubMenu(_skills);
             Menu.AddSubMenu(_items);
             Menu.AddSubMenu(_ranges);
@@ -100,6 +108,7 @@ namespace Tinker_Air13
 			var _settings = new Menu("Settings", "Settings UI");
             Menu.AddSubMenu(_settings);
 			_settings.AddItem(new MenuItem("HitCounter", "Enable Hit counter").SetValue(true));
+			_settings.AddItem(new MenuItem("RocketCounter", "Enable Rocket counter").SetValue(true));
 			_settings.AddItem(new MenuItem("TargetCalculator", "Enable target dmg calculator").SetValue(true));
 			_settings.AddItem(new MenuItem("Calculator", "Enable UI calculator").SetValue(true));
             _settings.AddItem(new MenuItem("BarPosX", "Position X").SetValue(new Slider(600, -1500, 1500)));
@@ -123,6 +132,12 @@ namespace Tinker_Air13
 		
         private static void Player_OnExecuteAction(Player sender, ExecuteOrderEventArgs args) 
 		{
+            me = ObjectMgr.LocalHero;
+            if (me == null)
+                return;
+            if (me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
+                return;
+		
             switch (args.Order) {
 
                 case Order.AbilityTarget:
@@ -141,6 +156,8 @@ namespace Tinker_Air13
 
 		private static void CastSpell(ExecuteOrderEventArgs args) 
 		{
+		
+		
             var spell = args.Ability;
             if (IgnoredSpells.Any(spell.StoredName().Equals))
                 return;			
@@ -150,8 +167,11 @@ namespace Tinker_Air13
             if (soulRing == null && bottle == null)
                 return;
 
-            if (!Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name))
+            if (!Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name))
                 return;
+				
+			if (!Menu.Item("autoSoulring").GetValue<bool>())
+				return;
 
             args.Process = false;
 			
@@ -170,16 +190,16 @@ namespace Tinker_Air13
                 case Order.AbilityLocation: 
 				{
 			
-					if (soulRing != null && soulRing.CanBeCasted()) 
+					if (soulRing != null && soulRing.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulRing.Name)) 
 						soulRing.UseAbility();		
-					if (bottle != null && bottle.CanBeCasted() && !me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration")  )
+					if (bottle != null && bottle.CanBeCasted() && !me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) )
 						bottle.UseAbility();
                     spell.UseAbility(Game.MousePosition);
                     break;
                 }
                 case Order.Ability: 
 				{
-					if (soulRing != null && soulRing.CanBeCasted()) 
+					if (soulRing != null && soulRing.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulRing.Name)) 
 						 soulRing.UseAbility();				
                     spell.UseAbility();
                     break;
@@ -255,13 +275,13 @@ namespace Tinker_Air13
 				var enemies = ObjectMgr.GetEntities<Hero>().Where(x => x.IsVisible && x.IsAlive && x.Team == me.GetEnemyTeam() && !x.IsIllusion);
 				foreach (var e in enemies)
 				{
-					if (Rocket != null && Rocket.CanBeCasted() && (e != null && me.Distance2D(e) < 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && !me.IsChanneling() && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
+					if (Rocket != null && Rocket.CanBeCasted() && (e != null && me.Distance2D(e) < 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
 					{
 						Rocket.UseAbility();
 					}
 				
 				
-					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) || e == null || me.Distance2D(e) >= 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling()&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) || e == null || me.Distance2D(e) >= 2500) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 700 ) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) &&  Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
 					{
 						Refresh.UseAbility();
 						if (Refresh.Level == 1)
@@ -721,7 +741,9 @@ namespace Tinker_Air13
 			else
 				aetherrange = 200;
 
-			if (bottle != null && !me.IsInvisible() && !me.IsChanneling() && me.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) && Utils.SleepCheck("bottle1"))
+				
+				
+			if (bottle != null && !me.IsInvisible() && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && !March.IsInAbilityPhase && me.Modifiers.Any(x => x.Name == "modifier_fountain_aura_buff") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) && Utils.SleepCheck("bottle1"))
 			{
 				if(!me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && (me.Health < me.MaximumHealth || me.Mana < me.MaximumMana))
 					bottle.UseAbility();
@@ -2054,8 +2076,18 @@ namespace Tinker_Air13
 					var starthit = HUDInfo.GetHPbarPosition(target) + new Vector2(107, HUDInfo.GetHpBarSizeY(target) - 13);
 					var starthits = HUDInfo.GetHPbarPosition(target) + new Vector2(108, HUDInfo.GetHpBarSizeY(target) - 12);
 					Drawing.DrawText(hitcounter.ToString()+" hits", starthits, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-					Drawing.DrawText(hitcounter.ToString()+" hits", starthit, new Vector2(21, 21), Color.White, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(hitcounter.ToString()+" hits", starthit, new Vector2(21, 21), (hitcounter<=1)?Color.Lime:Color.White, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 				}
+				if (Menu.Item("RocketCounter").GetValue<bool>())
+				{	
+					var rocketDmg = target.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0);
+					var rocketcounter = Math.Ceiling((target.Health - procastdamage)/rocketDmg);
+					var startrocket = HUDInfo.GetHPbarPosition(target) + new Vector2(107, HUDInfo.GetHpBarSizeY(target) + 6);
+					var startrockets = HUDInfo.GetHPbarPosition(target) + new Vector2(108, HUDInfo.GetHpBarSizeY(target) + 7);
+                    Drawing.DrawText(rocketcounter.ToString() + " rckts", startrockets, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+                    Drawing.DrawText(rocketcounter.ToString() + " rckts", startrocket, new Vector2(21, 21), (rocketcounter<=1)?Color.Lime:Color.Yellow, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+				}
+				
 			}  
 			
 			if (Menu.Item("Calculator").GetValue<bool>())
