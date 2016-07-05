@@ -19,11 +19,17 @@ namespace Tinker_Air13
         private static Item blink, dagon, sheep, soulring, ethereal, shiva, ghost, cyclone, forcestaff, glimmer, bottle, travel, veil, aether, atos;
         private static Hero me, target;
         private static List<Hero> Alies;
+		private static readonly Dictionary<Unit, ParticleEffect> VisibleUnit = new Dictionary<Unit, ParticleEffect>();
+		private static readonly Dictionary<Unit, ParticleEffect> VisibleUnit2 = new Dictionary<Unit, ParticleEffect>();
+		private static readonly Dictionary<Unit, ParticleEffect> VisibleUnit3 = new Dictionary<Unit, ParticleEffect>();
+		private static readonly Dictionary<Unit, ParticleEffect> VisibleUnit4 = new Dictionary<Unit, ParticleEffect>();
+
+
 		
         private static readonly Menu Menu = new Menu("Tinker Air13", "Tinker Air13", true, "npc_dota_hero_tinker", true);
         private static readonly Menu _skills = new Menu("Skills", "Skills");
         private static readonly Menu _items = new Menu("Items", "Items");
-        private static readonly Menu _ranges = new Menu("Ranges", "Ranges");
+        private static readonly Menu _ranges = new Menu("Drawing", "Drawing");
 
         private static readonly Dictionary<string, bool> Skills = new Dictionary<string, bool>
             {
@@ -48,16 +54,11 @@ namespace Tinker_Air13
                 {"item_dagon",true}
             };
 
-        private static readonly string[] IgnoredSpells = 
+        private static readonly string[] SoulringSpells = 
 			{
-            "item_tpscroll",
-            "item_travel_boots",
-            "item_travel_boots_2",
-            "item_blink",
-            "item_bottle",
-            "item_veil_of_discord",
-			"item_ghost",
-			"item_shivas_guard"
+            "tinker_heat_seeking_missile",
+            "tinker_rearm",
+            "tinker_march_of_the_machines"
 			};			
 			
         private static int[] laser_damage = new int[4] { 80, 160, 240, 320 };
@@ -74,20 +75,27 @@ namespace Tinker_Air13
         private static double angle, targetangle;
 		private static double etherealmult = 1, veilmult = 1, lensmult = 1, spellamplymult = 1;
 		
-        private static ParticleEffect linedisplay, rangedisplay_dagger, rangedisplay_rocket;
+        private static ParticleEffect linedisplay, rangedisplay_dagger, rangedisplay_dagger_inc, rangedisplay_rocket;
+		private static	ParticleEffect effect2, effect3, effect4;
+
         private static int linerange, range_dagger, range_rocket;
 			
 
         static void Main(string[] args)
         {
+			/*
             me = ObjectMgr.LocalHero;
             if (me == null)
                 return;
             if (me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
                 return;
+			*/
 		
             // Menu Options
             Menu.AddItem(new MenuItem("Combo Key", "Combo Key").SetValue(new KeyBind('D', KeyBindType.Press)));
+            Menu.AddItem(new MenuItem("TargetLock", "Target Lock"))
+                .SetValue(new StringList(new[] { "Free", "Lock" }));
+			
             Menu.AddItem(new MenuItem("Rocket Spam Key", "Rocket Spam Key").SetValue(new KeyBind('F', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("March Spam Key", "March Spam Key").SetValue(new KeyBind('E', KeyBindType.Press)));
 
@@ -102,8 +110,11 @@ namespace Tinker_Air13
             _skills.AddItem(new MenuItem("Skills: ", "Skills:").SetValue(new AbilityToggler(Skills)));
             _items.AddItem(new MenuItem("Items: ", "Items:").SetValue(new AbilityToggler(Items)));
             _ranges.AddItem(new MenuItem("Blink Range", "Show Blink Dagger Range").SetValue(true));
+            _ranges.AddItem(new MenuItem("Blink Range Incoming TP", "Show incoming TP Blink Range").SetValue(true));
             _ranges.AddItem(new MenuItem("Rocket Range", "Show Rocket Range").SetValue(true));
             _ranges.AddItem(new MenuItem("Show Direction", "Show Direction Vector on Rearming").SetValue(true));
+            _ranges.AddItem(new MenuItem("Show Target Effect", "Show Target Effect").SetValue(true));
+
 
 			var _settings = new Menu("Settings", "Settings UI");
             Menu.AddSubMenu(_settings);
@@ -121,12 +132,13 @@ namespace Tinker_Air13
             //Game.OnWndProc += ComboEngine;
             Game.OnUpdate += ComboEngine;
 			Game.OnUpdate += AD;
-			Game.OnUpdate += DrawRanges;
 
 			
             Player.OnExecuteOrder += Player_OnExecuteAction;
 			
             Drawing.OnDraw += Information;
+			Drawing.OnDraw += DrawRanges;
+
         }
 		
 		
@@ -156,10 +168,8 @@ namespace Tinker_Air13
 
 		private static void CastSpell(ExecuteOrderEventArgs args) 
 		{
-		
-		
             var spell = args.Ability;
-            if (IgnoredSpells.Any(spell.StoredName().Equals))
+            if (!SoulringSpells.Any(spell.StoredName().Equals))
                 return;			
 			
             var soulRing = me.FindItem("item_soul_ring");
@@ -179,6 +189,7 @@ namespace Tinker_Air13
 
             switch (args.Order) 
 			{
+				
                 case Order.AbilityTarget: 
 				{
                     var target = args.Target as Unit;
@@ -384,9 +395,28 @@ namespace Tinker_Air13
 			else
 				aetherrange = 200;
 				
+			if (!Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key))
+                target = null;
+           
+				
             if ((Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) && !Game.IsChatOpen)
             {
-                target = me.ClosestToMouseTarget(1000);
+                //target = me.ClosestToMouseTarget(2000);
+				
+				var targetLock =
+					Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex;
+				
+                if (Utils.SleepCheck("UpdateTarget")
+                    && (target == null || !target.IsValid || !target.IsAlive || !target.IsVisible || (target.IsVisible && targetLock == 0)))
+                {
+                    target = TargetSelector.ClosestToMouse(me, 2000);
+                    Utils.Sleep(250, "UpdateTarget");
+                }
+				
+				
+				
+				
+				
                 if (target != null && target.IsAlive && !target.IsIllusion && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && !CanReflectDamage(target))
                 {
                     FindItems();
@@ -1223,14 +1253,14 @@ namespace Tinker_Air13
 										&& !e.IsHexed()
 										&& !e.IsMagicImmune()
 										&& angle <= 0.03
-										&& ( (e.IsMelee && me.Position.Distance2D(e) < 350)
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Nevermore
-											|| (e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && IsCasted(e.Spellbook.SpellR))// && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
+										&& ( (e.IsMelee && me.Position.Distance2D(e) < 250)
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Nevermore && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && me.Distance2D(e) <= e.GetAttackRange()+50 && IsCasted(e.Spellbook.SpellR)// && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
 											)
 										&& e.IsAttacking() 
 										&& Utils.SleepCheck("Ghost"))
@@ -1275,11 +1305,12 @@ namespace Tinker_Air13
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Meepo
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Earthshaker
 											&& e.ClassID != ClassID.CDOTA_Unit_Hero_Centaur
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver
-											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar
+											
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TemplarAssassin && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_TrollWarlord && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Clinkz && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Weaver && me.Distance2D(e) <= e.GetAttackRange()+50
+											|| e.ClassID == ClassID.CDOTA_Unit_Hero_Huskar && me.Distance2D(e) <= e.GetAttackRange()+50
 											//|| e.Modifiers.Any(y => y.Name == "modifier_juggernaut_omnislash")
 											|| (e.ClassID == ClassID.CDOTA_Unit_Hero_Windrunner && IsCasted(e.Spellbook.SpellR))// && e.Modifiers.Any(y => y.Name == "modifier_windrunner_focusfire"))
 
@@ -1551,8 +1582,10 @@ namespace Tinker_Air13
 		
         public static void DrawRanges(EventArgs args)
         {
-			if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame)
-                return;
+			if (!Game.IsInGame || Game.IsPaused || Game.IsWatchingGame || !Utils.SleepCheck("VisibilitySleep"))
+				return;
+			//Utils.Sleep(150, "VisibilitySleep");
+				
             me = ObjectMgr.LocalHero;
             if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
                 return;
@@ -1568,13 +1601,84 @@ namespace Tinker_Air13
 
 			if (Menu.Item("Show Direction").GetValue<bool>())
 			{
+				/*
+				ParticleEffect effect3;
+						
+				if (me.IsChanneling() && !Prediction.IsTurning(me))
+				{
+					if (VisibleUnit3.TryGetValue(me, out effect3)) return;
+					effect3 = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
+					effect3.SetControlPoint(1, me.Position);
+					effect3.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
+					VisibleUnit3.Add(me, effect3);
+				}
+				else if (!me.IsChanneling())
+				{
+					if (!VisibleUnit3.TryGetValue(me, out effect3)) return;
+					effect3.Dispose();
+					VisibleUnit3.Remove(me);
+				}*/
+				
+				
+				if (me.IsChanneling())// && !Prediction.IsTurning(me))
+				{
+					if (effect3 == null)
+					{
+						effect3 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", me);     
+						effect3.SetControlPoint(1, me.Position);
+						effect3.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
+					}
+					else 
+					{
+						effect3.SetControlPoint(1, me.Position);
+						effect3.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
+					} 
+				}
+				else if (effect3 != null)
+				{
+				   effect3.Dispose();
+				   effect3 = null;
+				}  
+				
+			}
+			
+
+			
+			
+			if (Menu.Item("Show Target Effect").GetValue<bool>())
+			{
+				if (target != null && target.IsValid && !target.IsIllusion && target.IsAlive && target.IsVisible && me.Distance2D(target.Position) < 2000)
+				{
+					if (effect4 == null)
+					{
+						effect4 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_tower_aoe.vpcf", target);     
+						effect4.SetControlPoint(2, me.Position);
+						effect4.SetControlPoint(6, new Vector3(1, 0, 0));
+						effect4.SetControlPoint(7, target.Position);
+					}
+					else 
+					{
+						effect4.SetControlPoint(2, me.Position);
+						effect4.SetControlPoint(6, new Vector3(1, 0, 0));
+						effect4.SetControlPoint(7, target.Position);
+					} 
+				}
+				else if (effect4 != null)
+				{
+				   effect4.Dispose();
+				   effect4 = null;
+				}  
+			}
+			
+			/*
+			{
 				if (linedisplay == null)
 				{
 					linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
 					linedisplay.SetControlPoint(1, me.Position);
 					linedisplay.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
 				}
-				if (!me.IsChanneling()) 
+				if (!me.IsChanneling() || Prediction.IsTurning(me)) 
 				{
 					linedisplay.Dispose();
 					linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
@@ -1586,9 +1690,11 @@ namespace Tinker_Air13
 				{
 				linedisplay.Dispose();
 				linedisplay = null;
-				}
+				}*/
 			
 
+			
+			
 			if (Menu.Item("Blink Range").GetValue<bool>())
 			{
 				if (me.FindItem("item_blink")!=null)
@@ -1627,6 +1733,38 @@ namespace Tinker_Air13
 			
 			
 			
+			if (Menu.Item("Blink Range Incoming TP").GetValue<bool>())
+			{
+				if (me.FindItem("item_blink")!=null )
+				{	
+
+					var units = ObjectMgr.GetEntities<Unit>().Where
+					(x =>
+					(x is Hero && x.Team == me.Team)
+					||(x is Creep && x.Team == me.Team)
+					|| (x is Building && x.Team == me.Team)
+					|| (!(x is Hero) && !(x is Building) && !(x is Creep) 
+						&& x.ClassID != ClassID.CDOTA_NPC_TechiesMines && x.ClassID != ClassID.CDOTA_NPC_Observer_Ward
+						&& x.ClassID != ClassID.CDOTA_NPC_Observer_Ward_TrueSight && x.Team == me.Team)
+					).ToList();
+					
+					foreach (var unit in units)
+						{
+						HandleEffectR(unit);
+						HandleEffectD(unit);
+						}
+
+				}
+			}
+			
+			
+			
+
+			
+			
+			
+			
+			
 			if (Menu.Item("Rocket Range").GetValue<bool>())
 			{
 				if(rangedisplay_rocket == null)
@@ -1642,50 +1780,98 @@ namespace Tinker_Air13
 				rangedisplay_rocket.Dispose();
 				rangedisplay_rocket = null;
 				}
-		
-			
-			
-			/*
-			if (me.IsChanneling())
-			{
-				if (linedisplay == null)
-				{
-					linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
-					linedisplay.SetControlPoint(1, me.Position);
-					linedisplay.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
-				}
-				if (linerange != 555)
-				{
-					linedisplay.Dispose();
-					linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
-					linedisplay.SetControlPoint(1, me.Position);
-					linedisplay.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
-				}
-			}
-			else 
-			{
-				linedisplay.Dispose();
-				linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
-				linedisplay.SetControlPoint(1, me.Position);
-				linedisplay.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
-			}*/
-			
-			/*
-			if (me.IsChanneling() && linedisplay == null)
-			{
-					linedisplay = me.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
-					linedisplay.SetControlPoint(1, me.Position);
-					linedisplay.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange));
-			}
-			else 
-			{
-				linedisplay.Dispose();
-				
-			}*/
 			
 		}
 		
 		
+		
+        private static void HandleEffectR(Unit unit)
+        {
+            if (unit == null) return;
+            ParticleEffect effect;
+            me = ObjectMgr.LocalHero;
+            if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
+                return;
+			
+            if (unit.Modifiers.Any(y => y.Name == "modifier_boots_of_travel_incoming") && me.HasModifier("modifier_teleporting"))
+            {
+                if (VisibleUnit.TryGetValue(unit, out effect)) return;
+                effect = unit.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
+				range_dagger = 1200 + 130 + aetherrange;
+				effect.SetControlPoint(1, new Vector3(0, 255, 255));
+				effect.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
+                VisibleUnit.Add(unit, effect);
+            }
+            else
+            {
+                if (!VisibleUnit.TryGetValue(unit, out effect)) return;
+                effect.Dispose();
+                VisibleUnit.Remove(unit);
+            }
+        }
+		
+        private static void HandleEffectD(Unit unit)
+        {
+			/*
+            if (unit == null) return;
+            //ParticleEffect effect2;
+
+            me = ObjectMgr.LocalHero;
+            if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
+                return;
+			var upos = unit.Position;
+					
+            if (unit.Modifiers.Any(y => y.Name == "modifier_boots_of_travel_incoming") && me.HasModifier("modifier_teleporting"))// && !Prediction.IsTurning(me))
+            {
+                if (VisibleUnit2.TryGetValue(unit, out effect2)) return;
+                //effect2 = unit.AddParticleEffect(@"particles\ui_mouseactions\range_finder_d_glow.vpcf");
+				effect2 = unit.AddParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf");
+
+				effect2.SetControlPoint(1, upos);
+				effect2.SetControlPoint(2, FindVector(upos, me.Rotation, 1200+aetherrange));
+                VisibleUnit2.Add(unit, effect2);
+            }
+            else if (!unit.Modifiers.Any(y => y.Name == "modifier_boots_of_travel_incoming") || !me.HasModifier("modifier_teleporting") || !me.IsChanneling())// || Prediction.IsTurning(me))
+            {
+                if (!VisibleUnit2.TryGetValue(unit, out effect2)) return;
+                effect2.Dispose();
+                VisibleUnit2.Remove(unit);
+            }
+			*/
+			
+            if (unit == null) return;
+            me = ObjectMgr.LocalHero;
+            if (me == null || me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
+                return;
+			
+			
+            if (unit != null && unit.IsValid && unit.IsAlive && unit.Modifiers.Any(y => y.Name == "modifier_boots_of_travel_incoming") && me.HasModifier("modifier_teleporting"))// && !Prediction.IsTurning(me))
+			{
+				if (effect2 == null)
+				{
+					effect2 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", unit);     
+					effect2.SetControlPoint(1, unit.Position);
+					effect2.SetControlPoint(2, FindVector(unit.Position, me.Rotation, 1200+aetherrange));
+				}
+				else 
+				{
+					effect2.SetControlPoint(1, unit.Position);
+					effect2.SetControlPoint(2, FindVector(unit.Position, me.Rotation, 1200+aetherrange));
+				} 
+			}
+			//else if (effect2 != null)
+			if (!me.HasModifier("modifier_teleporting") && effect2 != null)
+			{
+			   effect2.Dispose();
+			   effect2 = null;
+			}
+			
+				
+        }
+
+		
+		
+
 		
 		
        public static Vector3 FindVector(Vector3 first, double ret, float distance)
@@ -2049,41 +2235,41 @@ namespace Tinker_Air13
             if (me.ClassID != ClassID.CDOTA_Unit_Hero_Tinker)
                 return;
 				
-            target = me.ClosestToMouseTarget(1000);
+            var targetInf = me.ClosestToMouseTarget(2000);
             FindItems();
-            if (target != null && target.IsValid && !target.IsIllusion && target.IsAlive && target.IsVisible)
+            if (targetInf != null && targetInf.IsValid && !targetInf.IsIllusion && targetInf.IsAlive && targetInf.IsVisible)
             {
 				if (Menu.Item("TargetCalculator").GetValue<bool>())
 				{	
-					var start = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 50);
-					var starts = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 49);
-					var start2 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 70);
-					var start2s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 69);
-					var start3 = HUDInfo.GetHPbarPosition(target) + new Vector2(0, HUDInfo.GetHpBarSizeY(target) - 90);
-					var start3s = HUDInfo.GetHPbarPosition(target) + new Vector2(1, HUDInfo.GetHpBarSizeY(target) - 89);
-					Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), starts, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-					Drawing.DrawText(EZkill(target) ? alldamage.ToString()+" ez" : alldamage.ToString(), start, new Vector2(21, 21), EZkill(target) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					var start = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(0, HUDInfo.GetHpBarSizeY(targetInf) - 50);
+					var starts = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(1, HUDInfo.GetHpBarSizeY(targetInf) - 49);
+					var start2 = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(0, HUDInfo.GetHpBarSizeY(targetInf) - 70);
+					var start2s = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(1, HUDInfo.GetHpBarSizeY(targetInf) - 69);
+					var start3 = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(0, HUDInfo.GetHpBarSizeY(targetInf) - 90);
+					var start3s = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(1, HUDInfo.GetHpBarSizeY(targetInf) - 89);
+					Drawing.DrawText(EZkill(targetInf) ? alldamage.ToString()+" ez" : alldamage.ToString(), starts, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(EZkill(targetInf) ? alldamage.ToString()+" ez" : alldamage.ToString(), start, new Vector2(21, 21), EZkill(targetInf) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 					Drawing.DrawText(procastdamage.ToString(), start2s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-					Drawing.DrawText(procastdamage.ToString(), start2, new Vector2(21, 21), (target.Health < procastdamage) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-					Drawing.DrawText(factdamage(target).ToString(), start3s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-					Drawing.DrawText(factdamage(target).ToString(), start3, new Vector2(21, 21), (target.Health < factdamage(target)) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(procastdamage.ToString(), start2, new Vector2(21, 21), (targetInf.Health < procastdamage) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(factdamage(targetInf).ToString(), start3s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText(factdamage(targetInf).ToString(), start3, new Vector2(21, 21), (targetInf.Health < factdamage(targetInf)) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 				}
 				if (Menu.Item("HitCounter").GetValue<bool>())
 				{	
 					var cleardmg = me.BonusDamage + me.DamageAverage;
-					var hitDmg = target.DamageTaken(cleardmg, DamageType.Physical, me);
-					var hitcounter = Math.Ceiling((target.Health - procastdamage)/hitDmg);
-					var starthit = HUDInfo.GetHPbarPosition(target) + new Vector2(107, HUDInfo.GetHpBarSizeY(target) - 13);
-					var starthits = HUDInfo.GetHPbarPosition(target) + new Vector2(108, HUDInfo.GetHpBarSizeY(target) - 12);
+					var hitDmg = targetInf.DamageTaken(cleardmg, DamageType.Physical, me);
+					var hitcounter = Math.Ceiling((targetInf.Health - procastdamage)/hitDmg);
+					var starthit = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(107, HUDInfo.GetHpBarSizeY(targetInf) - 13);
+					var starthits = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(108, HUDInfo.GetHpBarSizeY(targetInf) - 12);
 					Drawing.DrawText(hitcounter.ToString()+" hits", starthits, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 					Drawing.DrawText(hitcounter.ToString()+" hits", starthit, new Vector2(21, 21), (hitcounter<=1)?Color.Lime:Color.White, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 				}
 				if (Menu.Item("RocketCounter").GetValue<bool>())
 				{	
-					var rocketDmg = target.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0);
-					var rocketcounter = Math.Ceiling((target.Health - procastdamage)/rocketDmg);
-					var startrocket = HUDInfo.GetHPbarPosition(target) + new Vector2(107, HUDInfo.GetHpBarSizeY(target) + 6);
-					var startrockets = HUDInfo.GetHPbarPosition(target) + new Vector2(108, HUDInfo.GetHpBarSizeY(target) + 7);
+					var rocketDmg = targetInf.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0);
+					var rocketcounter = Math.Ceiling((targetInf.Health - procastdamage)/rocketDmg);
+					var startrocket = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(107, HUDInfo.GetHpBarSizeY(targetInf) + 6);
+					var startrockets = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(108, HUDInfo.GetHpBarSizeY(targetInf) + 7);
                     Drawing.DrawText(rocketcounter.ToString() + " rckts", startrockets, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
                     Drawing.DrawText(rocketcounter.ToString() + " rckts", startrocket, new Vector2(21, 21), (rocketcounter<=1)?Color.Lime:Color.Yellow, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 				}
