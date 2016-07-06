@@ -559,7 +559,7 @@ namespace Tinker_Air13
 								&& magicimune
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)
 								&& target.NetworkPosition.Distance2D(me) <= 1500+aetherrange
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& !target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")
 								)
@@ -582,7 +582,7 @@ namespace Tinker_Air13
 								
 							if (ghost != null && ethereal == null && ghost.CanBeCasted() 
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name) )
 							{
 								ghost.UseAbility();
@@ -611,7 +611,7 @@ namespace Tinker_Air13
 								&& (!veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) 
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
 								&& !CanReflectDamage(target)
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -631,7 +631,7 @@ namespace Tinker_Air13
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
 								&& !CanReflectDamage(target)
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
@@ -659,7 +659,9 @@ namespace Tinker_Air13
 							if (Rocket.Level > 0 && Rocket.CanBeCasted() 
 								&& target.NetworkPosition.Distance2D(me) <= 2500 
 								&& (!EzkillCheck || target.NetworkPosition.Distance2D(me) >= 800+aetherrange)
-								&& (!OneHitLeft(target)  || target.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+								//&& (!OneHitLeft(target)  || target.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+
 								&& magicimune  && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name)
 								&& (((veil == null || !veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) && target.NetworkPosition.Distance2D(me) <= 1500 + aetherrange) || target.NetworkPosition.Distance2D(me) > 1500 + aetherrange)
 								&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name))&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange)|| target.NetworkPosition.Distance2D(me) > 800+aetherrange)
@@ -674,7 +676,7 @@ namespace Tinker_Air13
 							if (Laser.Level > 0 && Laser.CanBeCasted() 
 								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Laser.Name)
 								&& !EzkillCheck 
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
 								&& magicimune 
 								&& target.NetworkPosition.Distance2D(me) <= 650+aetherrange
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -693,7 +695,8 @@ namespace Tinker_Air13
 							if (shiva != null && shiva.CanBeCasted() 
 								&& !EzkillCheck 
 								&& magicimune
-								&& (!OneHitLeft(target) )
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+
 								&& target.NetworkPosition.Distance2D(me) <= 900
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(shiva.Name)
@@ -717,7 +720,8 @@ namespace Tinker_Air13
 								&& Refresh != null && Refresh.CanBeCasted() 
 								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name) 
 								&& !me.IsChanneling() 
-								&& (!OneHitLeft(target) || target.NetworkPosition.Distance2D(me) > 800+aetherrange)
+								
+								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune() || target.NetworkPosition.Distance2D(me) > 800+aetherrange)
 								&& Utils.SleepCheck("Rearm") 
 								&& Ready_for_refresh())
 							{
@@ -1509,7 +1513,7 @@ namespace Tinker_Air13
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)  
 									&& e.NetworkPosition.Distance2D(me) < 2500
 									&& magicimune  
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& (((veil == null || !veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")  /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) && e.NetworkPosition.Distance2D(me) <= 1500+aetherrange) || ((e.NetworkPosition.Distance2D(me) > 1500+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
 									&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/)&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange)|| ((e.NetworkPosition.Distance2D(me) > 800+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
 																		
@@ -1521,7 +1525,7 @@ namespace Tinker_Air13
 									&& magicimune
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)
 									&& e.NetworkPosition.Distance2D(me) <= 1500+aetherrange
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 									&& !e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")
 									)
@@ -1546,7 +1550,7 @@ namespace Tinker_Air13
 								if (ethereal != null && ethereal.CanBeCasted() 
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& magicimune
 									&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1557,7 +1561,7 @@ namespace Tinker_Air13
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled("item_dagon")
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
 									&& (ethereal == null || (ethereal!=null && !IsCasted(ethereal) && !ethereal.CanBeCasted()) || e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal") /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/) 
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& magicimune
 									&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1569,7 +1573,7 @@ namespace Tinker_Air13
 								if (Rocket.Level > 0 && Rocket.CanBeCasted() 
 									&& e.NetworkPosition.Distance2D(me) <= 2500 
 									&& (!EzkillCheck || e.NetworkPosition.Distance2D(me) >= 800+aetherrange)
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& magicimune  
 									//&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) 
 									//&& (((veil == null || !veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")  | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) && e.NetworkPosition.Distance2D(me) <= 1500+aetherrange)|| ((e.NetworkPosition.Distance2D(me) > 1500+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
@@ -1584,7 +1588,7 @@ namespace Tinker_Air13
 								if (Laser.Level > 0 && Laser.CanBeCasted() 
 									//&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Laser.Name)
 									&& !EzkillCheck 
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& magicimune 
 									&& e.NetworkPosition.Distance2D(me) <= 650+aetherrange
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1596,7 +1600,7 @@ namespace Tinker_Air13
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
 									&& (ethereal == null || (ethereal!=null && !IsCasted(ethereal) && !ethereal.CanBeCasted()) || e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal") /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/) 
 									&& !EzkillCheck 
-									&& (!OneHitLeft(e)  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
 									&& magicimune
 									&& e.NetworkPosition.Distance2D(me) <= 900
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
