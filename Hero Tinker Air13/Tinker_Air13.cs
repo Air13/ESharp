@@ -185,17 +185,15 @@ namespace Tinker_Air13
             if (!SoulringSpells.Any(spell.StoredName().Equals))
                 return;			
 			
-            var soulRing = me.FindItem("item_soul_ring");
+            var soulring = me.FindItem("item_soul_ring");
             var bottle = me.FindItem("item_bottle");
 			
-            if (!Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name))
-                return;
+            //if (!Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name))
+            //    return;
 				
-            if (soulRing == null && bottle == null)
+            if (soulring == null)
                 return;
 
-
-				
 			if (!Menu.Item("autoSoulring").GetValue<bool>())
 				return;
 
@@ -217,8 +215,8 @@ namespace Tinker_Air13
                 case Order.AbilityLocation: 
 				{
 			
-					if (soulRing != null && soulRing.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulRing.Name)) 
-						soulRing.UseAbility();		
+					if (soulring != null && soulring.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) 
+						soulring.UseAbility();		
 					if (bottle != null && bottle.CanBeCasted() && !me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) )
 						bottle.UseAbility();
                     spell.UseAbility(Game.MousePosition);
@@ -226,8 +224,8 @@ namespace Tinker_Air13
                 }
                 case Order.Ability: 
 				{
-					if (soulRing != null && soulRing.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulRing.Name)) 
-						 soulRing.UseAbility();				
+					if (soulring != null && soulring.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) 
+						 soulring.UseAbility();				
                     spell.UseAbility();
                     break;
                 }
@@ -279,11 +277,20 @@ namespace Tinker_Air13
 					else p = Game.MousePosition;				
 				
 					blink.UseAbility(p);
-                    Utils.Sleep(250, "Blinks");
+                    Utils.Sleep(50, "Blinks");
 
 				}
 						
-				
+				/*
+				if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && (blink!=null && me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error) && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
+				{
+					soulring.UseAbility();
+				}
+				*/
+				if (bottle != null && bottle.CanBeCasted() && !me.IsChanneling() && (blink==null || (blink!=null && me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error)) && !me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && (me.MaximumMana-me.Mana)>60 && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) && Utils.SleepCheck("Rearms"))
+				{
+					bottle.UseAbility();
+				}
 				
 				/*
 				if (ghost != null && ghost.CanBeCasted() && !me.IsChanneling() && Menu.Item("Items2: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name) && Utils.SleepCheck("Rearms"))
@@ -291,25 +298,25 @@ namespace Tinker_Air13
 					ghost.UseAbility(false);
 				}
 				*/
-				if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
-				{
-					soulring.UseAbility();
-				}
-				if (bottle != null && bottle.CanBeCasted() && !me.IsChanneling() && !me.Modifiers.Any(x => x.Name == "modifier_bottle_regeneration") && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(bottle.Name) && Utils.SleepCheck("Rearms"))
-				{
-					bottle.UseAbility();
-				}
+
 				var enemies = ObjectMgr.GetEntities<Hero>().Where(x => x.IsVisible && x.IsAlive && x.Team == me.GetEnemyTeam() && !x.IsIllusion);
 				foreach (var e in enemies)
 				{
-					if (Rocket != null && Rocket.CanBeCasted() && (e != null && me.Distance2D(e) < 2500 + ensage_error) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange + ensage_error ) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
-					{
+					if (Rocket != null && Rocket.CanBeCasted() &&  me.Distance2D(e) < 2500 && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange + ensage_error ) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
+					{	
+						
+						if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
+						{
+							soulring.UseAbility();
+						}
+						
 						Rocket.UseAbility();
 					}
-				
 					
-					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && me.Distance2D(e) <= 2500 + ensage_error && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) || e == null ) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+						
+					if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && me.Distance2D(e) <= 2500 && (!Rocket.CanBeCasted()  || Rocket.Level <= 0 || !Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name)) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)  && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
 					{
+
 						Refresh.UseAbility();
 						if (Refresh.Level == 1)
 							Utils.Sleep(3010, "Rearms");
@@ -320,8 +327,13 @@ namespace Tinker_Air13
 
 					}
                 }
-                if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+				
+                //if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (blink != null && me.Distance2D(Game.MousePosition) > 650+ aetherrange + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+                if ((blink != null && me.Distance2D(Game.MousePosition) > 650+ aetherrange + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
 				{
+					if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && (blink!=null && me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error) && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
+						soulring.UseAbility();
+						
 					Refresh.UseAbility();
 					if (Refresh.Level == 1)
 						Utils.Sleep(3010, "Rearms");
@@ -330,6 +342,11 @@ namespace Tinker_Air13
 					if (Refresh.Level == 3)
 						Utils.Sleep(760, "Rearms");
 
+				}
+				
+				if ((blink==null || (blink!=null && me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error)) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)&& Utils.SleepCheck("Rearms")) 
+				{
+					me.Move(Game.MousePosition);
 				}
 				
 				Utils.Sleep(120, "RocketSpam");
@@ -439,7 +456,7 @@ namespace Tinker_Air13
 					
 
 					
-					if (Utils.SleepCheck("FASTCOMBO") && !me.IsChanneling() )
+					if (Utils.SleepCheck("FASTCOMBO"))
 					{
 						uint elsecount = 0;
 						bool EzkillCheck = EZkill(target);
@@ -449,7 +466,7 @@ namespace Tinker_Air13
 						
 						
 						if (soulring != null && soulring.CanBeCasted() 
-							&& target.NetworkPosition.Distance2D(me) <= 2500 + ensage_error
+							&& target.NetworkPosition.Distance2D(me) <= 2500
 							&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)  )
 						{
 							soulring.UseAbility();
@@ -468,7 +485,13 @@ namespace Tinker_Air13
                         {
                             blink.UseAbility(Game.MousePosition);
                         }*/
-						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling()  && (me.Distance2D(Game.MousePosition) > 650+aetherrange + ensage_error)  && (target.NetworkPosition.Distance2D(me) <= 1200 + 650 + ensage_error*2 +aetherrange*2))// && Utils.SleepCheck("Rearms"))
+						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) 
+							&& !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+							&& (me.Distance2D(Game.MousePosition) > 650+aetherrange + ensage_error)  
+							&& (target.NetworkPosition.Distance2D(me) <= 1200 + 650 + ensage_error*2 +aetherrange*2)
+							&& Utils.SleepCheck("Blinks")
+							// && Utils.SleepCheck("Rearms"))
+							)
 						{
 							var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
 							var p13 = Game.MousePosition;
@@ -487,7 +510,7 @@ namespace Tinker_Air13
 							else p13 = Game.MousePosition;				
 						
 							blink.UseAbility(p13);
-							//Utils.Sleep(250, "Blinks");
+							Utils.Sleep(200, "Blinks");
 
 						}
 						/*
@@ -528,6 +551,25 @@ namespace Tinker_Air13
 							elsecount += 1;
 							
 							
+						if (!me.IsChanneling() 
+							&& me.CanAttack() 
+							&& !target.IsAttackImmune() 
+							&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+							&& OneHitLeft(target)
+							&& target.NetworkPosition.Distance2D(me) <= me.GetAttackRange()+50
+							//&& Utils.SleepCheck("attack")	
+							//&& Utils.SleepCheck("Blinks")
+							)
+						{
+							me.Attack(target);
+							//Orbwalking.Orbwalk(target);
+							//Utils.Sleep(250, "attack");
+						}
+						else
+							elsecount += 1;
+
+							
+							
 						if (target.IsLinkensProtected() && Utils.SleepCheck("combo2"))
 						{
 							if (forcestaff != null && forcestaff.CanBeCasted() )
@@ -553,6 +595,8 @@ namespace Tinker_Air13
 								elsecount += 1;
 							*/
 							
+
+							
 							if (sheep != null && sheep.CanBeCasted() 
 								//&& !target.UnitState.HasFlag(UnitState.Hexed) 
 								//&& !target.UnitState.HasFlag(UnitState.Stunned) 
@@ -560,6 +604,7 @@ namespace Tinker_Air13
 								&& (!EzkillCheck || (target.FindItem("item_manta") != null && target.FindItem("item_manta").CanBeCasted()) || (target.FindItem("item_black_king_bar") != null && target.FindItem("item_black_king_bar").CanBeCasted()) )
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(sheep.Name)
+								&& Utils.SleepCheck("Blinks")
 								)
 								sheep.UseAbility(target);
 							else
@@ -574,9 +619,10 @@ namespace Tinker_Air13
 								&& magicimune
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)
 								&& target.NetworkPosition.Distance2D(me) <= 1500+aetherrange + ensage_error
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+								//&& !OneHitLeft(target)
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& !target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")
+								&& Utils.SleepCheck("Blinks")
 								)
 								{
 									if (me.Distance2D(target) > 1000 + aetherrange + ensage_error)
@@ -597,7 +643,7 @@ namespace Tinker_Air13
 								
 							if (ghost != null && ethereal == null && ghost.CanBeCasted() 
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+								&& !OneHitLeft(target)
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name) )
 							{
 								ghost.UseAbility();
@@ -626,11 +672,13 @@ namespace Tinker_Air13
 								&& (!veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) 
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+								&& !OneHitLeft(target)
 								&& !CanReflectDamage(target)
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
+								&& Utils.SleepCheck("Blinks")
+
 								)
 							{
 								ethereal.UseAbility(target);
@@ -646,10 +694,11 @@ namespace Tinker_Air13
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
 								&& !CanReflectDamage(target)
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
-								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
+								&& !OneHitLeft(target)
+								&& target.NetworkPosition.Distance2D(me) <= dagondistance[dagon.Level - 1]+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
+								&& Utils.SleepCheck("Blinks")
 								)
 								dagon.UseAbility(target);
 							else
@@ -672,15 +721,16 @@ namespace Tinker_Air13
 								elsecount += 1;
 							*/
 							if (Rocket.Level > 0 && Rocket.CanBeCasted() 
-								&& target.NetworkPosition.Distance2D(me) <= 2500  + ensage_error
-								&& (!EzkillCheck || target.NetworkPosition.Distance2D(me) >= 800+aetherrange + ensage_error)
-								//&& (!OneHitLeft(target)  || target.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
-
-								&& magicimune  && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name)
-								&& (((veil == null || !veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) && target.NetworkPosition.Distance2D(me) <= 1500 + aetherrange + ensage_error) || target.NetworkPosition.Distance2D(me) > 1500 + aetherrange + ensage_error)
-								&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name))&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error)|| target.NetworkPosition.Distance2D(me) > 800+aetherrange + ensage_error)
+								&& target.NetworkPosition.Distance2D(me) <= 2500
+								&& (!EzkillCheck)// || target.NetworkPosition.Distance2D(me) >= 800+aetherrange + ensage_error)
+								&& !OneHitLeft(target)
+								&& magicimune  
+								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name)
+								&& (((veil == null || !veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name))))// && target.NetworkPosition.Distance2D(me) <= 1500 + aetherrange + ensage_error))// || target.NetworkPosition.Distance2D(me) > 1500 + aetherrange + ensage_error)
+								&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name))))//&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error)) //|| target.NetworkPosition.Distance2D(me) > 800+aetherrange + ensage_error)
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
+								&& Utils.SleepCheck("Blinks")
+
 							)
 							{
 								Rocket.UseAbility();
@@ -691,10 +741,11 @@ namespace Tinker_Air13
 							if (Laser.Level > 0 && Laser.CanBeCasted() 
 								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Laser.Name)
 								&& !EzkillCheck 
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
+								&& !OneHitLeft(target)
 								&& magicimune 
 								&& target.NetworkPosition.Distance2D(me) <= 650+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
+								&& Utils.SleepCheck("Blinks")
 								)
 								Laser.UseAbility(target);
 							else
@@ -710,11 +761,11 @@ namespace Tinker_Air13
 							if (shiva != null && shiva.CanBeCasted() 
 								&& !EzkillCheck 
 								&& magicimune
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune())
-
+								&& !OneHitLeft(target)
 								&& target.NetworkPosition.Distance2D(me) <= 900 + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(shiva.Name)
+								&& Utils.SleepCheck("Blinks")
 								)
 								shiva.UseAbility();
 							else
@@ -731,14 +782,15 @@ namespace Tinker_Air13
 									me.Move(Game.MousePosition, false);
 							}*/ 
 							
-							if (elsecount == 11 
+							if (elsecount == 12 
 								&& Refresh != null && Refresh.CanBeCasted() 
 								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Refresh.Name) 
-								&& !me.IsChanneling() 
-								
-								&& (!OneHitLeft(target) || !me.CanAttack() || target.IsAttackImmune() || target.NetworkPosition.Distance2D(me) > 800+aetherrange + ensage_error)
+								&& !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) 
+								//&& !OneHitLeft(target)
 								&& Utils.SleepCheck("Rearm") 
-								&& Ready_for_refresh())
+								&& Ready_for_refresh()
+								&& Utils.SleepCheck("Blinks")
+								)
 							{
 								Refresh.UseAbility();
 								if (Refresh.Level == 1)
@@ -1501,6 +1553,7 @@ namespace Tinker_Air13
 						&& !e.Modifiers.Any(y => y.Name == "modifier_shadow_demon_disruption")
 						&& !e.Modifiers.Any(y => y.Name == "modifier_tusk_snowball_movement")
 						&& !me.Modifiers.Any(y => y.Name == "modifier_pugna_nether_ward_aura")
+
 						)
 						{
 							if (Utils.SleepCheck("AUTOCOMBO") && !me.IsChanneling())
@@ -1513,23 +1566,21 @@ namespace Tinker_Air13
 									&& me.CanAttack() 
 									&& !e.IsAttackImmune() 
 									&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
-									&& OneHitLeft(e) //&& !Orbwalking.AttackOnCooldown(e)
+									&& OneHitLeft(e)
 									&& e.NetworkPosition.Distance2D(me) <= me.GetAttackRange()+50
 									//&& Utils.SleepCheck("attack")			
 									)
 								{
 									me.Attack(e);
 									//Orbwalking.Orbwalk(e);
-
 									//Utils.Sleep(250, "attack");
-
 								}
 								
 								if (soulring != null && soulring.CanBeCasted()
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)  
-									&& e.NetworkPosition.Distance2D(me) < 2500 + ensage_error
+									&& e.NetworkPosition.Distance2D(me) < 2500
 									&& magicimune  
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& (((veil == null || !veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")  /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) && e.NetworkPosition.Distance2D(me) <= 1500+aetherrange) || ((e.NetworkPosition.Distance2D(me) > 1500+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
 									&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/)&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange)|| ((e.NetworkPosition.Distance2D(me) > 800+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
 																		
@@ -1541,7 +1592,7 @@ namespace Tinker_Air13
 									&& magicimune
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)
 									&& e.NetworkPosition.Distance2D(me) <= 1500+aetherrange + ensage_error
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 									&& !e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")
 									)
@@ -1566,7 +1617,7 @@ namespace Tinker_Air13
 								if (ethereal != null && ethereal.CanBeCasted() 
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& magicimune
 									&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1577,9 +1628,9 @@ namespace Tinker_Air13
 									//&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled("item_dagon")
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
 									&& (ethereal == null || (ethereal!=null && !IsCasted(ethereal) && !ethereal.CanBeCasted()) || e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal") /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/) 
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& magicimune
-									&& e.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
+									&& e.NetworkPosition.Distance2D(me) <= dagondistance[dagon.Level - 1]+aetherrange + ensage_error
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 									)
 									dagon.UseAbility(e);
@@ -1587,9 +1638,9 @@ namespace Tinker_Air13
 								
 								
 								if (Rocket.Level > 0 && Rocket.CanBeCasted() 
-									&& e.NetworkPosition.Distance2D(me) <= 2500  + ensage_error
+									&& e.NetworkPosition.Distance2D(me) <= 2500 
 									&& (!EzkillCheck || e.NetworkPosition.Distance2D(me) >= 800+aetherrange + ensage_error)
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& magicimune  
 									//&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) 
 									//&& (((veil == null || !veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff")  | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)) && e.NetworkPosition.Distance2D(me) <= 1500+aetherrange)|| ((e.NetworkPosition.Distance2D(me) > 1500+aetherrange) && (e.Health < (int)(e.DamageTaken(rocket_damage[Rocket.Level - 1], DamageType.Magical, me, false, 0, 0, 0)*spellamplymult*lensmult)))   )
@@ -1604,7 +1655,7 @@ namespace Tinker_Air13
 								if (Laser.Level > 0 && Laser.CanBeCasted() 
 									//&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Laser.Name)
 									&& !EzkillCheck 
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& magicimune 
 									&& e.NetworkPosition.Distance2D(me) <= 650+aetherrange + ensage_error
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1616,7 +1667,7 @@ namespace Tinker_Air13
 									&& (!veil.CanBeCasted() || e.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") || veil == null /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name)*/) 
 									&& (ethereal == null || (ethereal!=null && !IsCasted(ethereal) && !ethereal.CanBeCasted()) || e.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal") /*| !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)*/) 
 									&& !EzkillCheck 
-									&& (!OneHitLeft(e) || !me.CanAttack() || e.IsAttackImmune()  || e.NetworkPosition.Distance2D(me) > me.GetAttackRange()+50)
+									&& !OneHitLeft(e)
 									&& magicimune
 									&& e.NetworkPosition.Distance2D(me) <= 900 + ensage_error
 									&& !(e.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
@@ -1683,7 +1734,9 @@ namespace Tinker_Air13
 				{
 					if (effect3 == null)
 					{
-						effect3 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", me);     
+						//effect3 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", me);     
+						effect3 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_d_glow.vpcf", me);     
+						
 						effect3.SetControlPoint(1, me.Position);
 						effect3.SetControlPoint(2, FindVector(me.Position, me.Rotation, 1200+aetherrange + ensage_error));
 					}
@@ -1762,7 +1815,7 @@ namespace Tinker_Air13
 					{
 						rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
 						range_dagger = 1200  + aetherrange + 130;
-						rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
+						rangedisplay_dagger.SetControlPoint(1, new Vector3(150, 255, 255));
 						rangedisplay_dagger.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
 					}
 					if (range_dagger != 1200  + aetherrange + 130)
@@ -1771,7 +1824,7 @@ namespace Tinker_Air13
 						if(rangedisplay_dagger != null)
 							rangedisplay_dagger.Dispose();
 						rangedisplay_dagger = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-						rangedisplay_dagger.SetControlPoint(1, new Vector3(0, 255, 255));
+						rangedisplay_dagger.SetControlPoint(1, new Vector3(150, 255, 255));
 						rangedisplay_dagger.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
 					}
 				}
@@ -1849,7 +1902,7 @@ namespace Tinker_Air13
 				rangedisplay_laser = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
 				range_laser = 650 + aetherrange +130;
 				//range_laser = (int)me.Spellbook.SpellQ.GetCastRange();
-				rangedisplay_laser.SetControlPoint(1, new Vector3(111, 111, 255));
+				rangedisplay_laser.SetControlPoint(1, new Vector3(0, 150, 255));
 				rangedisplay_laser.SetControlPoint(2, new Vector3(range_laser, 255, 0));
 				}
 				if (range_laser != 650 + aetherrange +130)
@@ -1888,7 +1941,7 @@ namespace Tinker_Air13
                 if (VisibleUnit.TryGetValue(unit, out effect)) return;
                 effect = unit.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
 				range_dagger = 1200 + aetherrange + 130;
-				effect.SetControlPoint(1, new Vector3(0, 255, 255));
+				effect.SetControlPoint(1, new Vector3(150, 255, 255));
 				effect.SetControlPoint(2, new Vector3(range_dagger, 255, 0));
                 VisibleUnit.Add(unit, effect);
             }
@@ -1939,7 +1992,7 @@ namespace Tinker_Air13
 			{
 				if (effect2 == null)
 				{
-					effect2 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", unit);     
+					effect2 = new ParticleEffect(@"particles\ui_mouseactions\range_finder_d_glow.vpcf", unit);     
 					effect2.SetControlPoint(1, unit.Position);
 					effect2.SetControlPoint(2, FindVector(unit.Position, me.Rotation, 1200+aetherrange + 130));
 				}
@@ -2056,6 +2109,36 @@ namespace Tinker_Air13
             return ability.Level > 0 && ability.CooldownLength > 0 && Math.Ceiling(ability.CooldownLength).Equals(Math.Ceiling(ability.Cooldown));
         }
 		
+		static bool IsPhysDamageImune(Hero v)
+        {
+            if (me.Modifiers
+                .Any(x =>
+                x.Name == "modifier_tinker_laser_blind"
+                || x.Name == "modifier_troll_warlord_whirling_axes_blind" 
+				|| x.Name == "modifier_brewmaster_drunken_haze"
+                || x.Name == "modifier_pugna_decrepify"
+				|| x.Name == "modifier_item_ethereal_blade_ethereal")
+                || v.Modifiers.Any(x => x.Name == "modifier_omninight_guardian_angel"
+									|| x.Name == "modifier_pugna_decrepify"
+									|| x.Name == "modifier_windrunner_windrun"
+									|| x.Name == "modifier_winter_wyverny_cold_embrace"
+									|| x.Name == "modifier_ghost_state" 
+									|| x.Name == "modifier_item_ethereal_blade_ethereal"
+									)
+                || (v.ClassID == ClassID.CDOTA_Unit_Hero_Tiny && v.Spellbook.SpellE.Level > 0)
+				|| v.IsInvul()
+				)
+                return true;
+            
+            else
+                return false;
+        }
+		
+		
+		
+		
+		
+		
 		
 
 		
@@ -2116,6 +2199,7 @@ namespace Tinker_Air13
 				if (me.CanAttack() 
 					&& !en.IsAttackImmune() 
 					&& !en.IsInvul()
+					&& !IsPhysDamageImune(en)
 					//&& (ethereal == null || !ethereal.CanBeCasted())
 					//&& (ghost == null || !ghost.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name))
 					)
@@ -2370,7 +2454,7 @@ namespace Tinker_Air13
 						allrocketdmg = (int)(en.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0)* allmult);
                     else if (me.Distance2D(en) >= 800 + aetherrange + ensage_error && me.Distance2D(en) < 1500 + aetherrange + ensage_error)
 						allrocketdmg = (int)(en.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0)* veilmult * lensmult * spellamplymult);
-                    else if (me.Distance2D(en) >= 1500 + aetherrange + ensage_error && me.Distance2D(en) < 2500 + ensage_error)
+                    else if (me.Distance2D(en) >= 1500 + aetherrange + ensage_error && me.Distance2D(en) < 2500)
 						allrocketdmg = (int)(en.DamageTaken((int)(rocket_damage[Rocket.Level - 1]), DamageType.Magical, me, false, 0, 0, 0)* lensmult * spellamplymult);
 				else
 					allrocketdmg = 0;
@@ -2379,6 +2463,8 @@ namespace Tinker_Air13
 					&& !en.IsAttackImmune() 
 					&& me.Distance2D(en)<me.GetAttackRange()+50 
 					&& !en.IsInvul()
+					&& !IsPhysDamageImune(en)
+
 					//&& (ethereal == null || !ethereal.CanBeCasted())
 					//&& (ghost == null || !ghost.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ghost.Name))
 					)
@@ -2386,7 +2472,7 @@ namespace Tinker_Air13
 				else
 					allphysdmg = 0;
 					
-				factdamage1 = ((me.Distance2D(en)<650+aetherrange + ensage_error)? alllaserdmg : 0 )+ ((me.Distance2D(en)<2500 + ensage_error)? allrocketdmg : 0) + ((me.Distance2D(en)<800+aetherrange + ensage_error)? alletherealdmg: 0) + ((me.Distance2D(en)<dagondist+aetherrange + ensage_error)? alldagondmg: 0) + ((me.Distance2D(en)<900 + ensage_error)? allshivadmg : 0) + allphysdmg;  //factical damage in current range
+				factdamage1 = ((me.Distance2D(en)<650+aetherrange + ensage_error)? alllaserdmg : 0 )+ ((me.Distance2D(en)<2500)? allrocketdmg : 0) + ((me.Distance2D(en)<800+aetherrange + ensage_error)? alletherealdmg: 0) + ((me.Distance2D(en)<dagondist+aetherrange + ensage_error)? alldagondmg: 0) + ((me.Distance2D(en)<900 + ensage_error)? allshivadmg : 0) + allphysdmg;  //factical damage in current range
                 return factdamage1;
               
             }
@@ -2454,7 +2540,7 @@ namespace Tinker_Air13
 					manasoulring = 0;
 
 					
-				manacounter = ((me.Distance2D(en)<650+aetherrange + ensage_error)? manalaser : 0 )+ ((me.Distance2D(en)<2500 + ensage_error)? manarocket : 0) + ((me.Distance2D(en)<800+aetherrange + ensage_error)? manaethereal: 0) + ((me.Distance2D(en)<dagondist+aetherrange + ensage_error)? manadagon: 0) + ((me.Distance2D(en)<900 + ensage_error)? manashiva : 0)-manasoulring;  //factical mana consume in current range
+				manacounter = ((me.Distance2D(en)<650+aetherrange + ensage_error)? manalaser : 0 )+ ((me.Distance2D(en)<2500)? manarocket : 0) + ((me.Distance2D(en)<800+aetherrange + ensage_error)? manaethereal: 0) + ((me.Distance2D(en)<dagondist+aetherrange + ensage_error)? manadagon: 0) + ((me.Distance2D(en)<900 + ensage_error)? manashiva : 0)-manasoulring;  //factical mana consume in current range
 
 				
 				return manacounter;
@@ -2463,9 +2549,29 @@ namespace Tinker_Air13
 				return 0;
               
         }
+
+
+        static int ProcastCounter(Hero en)
+		{
+			var maxprocastdmgstatic = (en.DamageTaken(averagedamage()*100/75, DamageType.Magical, me, false, 0, 0, 0));
+			var cleardmg = me.BonusDamage + me.DamageAverage;
+			var hitDmg = en.DamageTaken(cleardmg, DamageType.Physical, me);
+            if (!en.IsMagicImmune() && !en.IsInvul())
+            {
+				if (IsPhysDamageImune(en))
+                    return (int)Math.Ceiling(en.Health / maxprocastdmgstatic);
+				else
+					return (int)Math.Ceiling(en.Health / maxprocastdmgstatic - hitDmg/en.Health );
+
+            }
+            else 
+                return 999;
 		
 		
 		
+		}
+
+	
 		
 		static int RktCount(Hero en)
 		{
@@ -2527,7 +2633,13 @@ namespace Tinker_Air13
 			
 			var cleardmg = me.BonusDamage + me.DamageAverage;
 			var hitDmg = en.DamageTaken(cleardmg, DamageType.Physical, me);
-			return (Math.Ceiling(Math.Abs(en.Health-factdamage(en))/hitDmg)<=1);
+			if(((en.Health<factdamage(en)) && (en.Health>factdamage(en)-hitDmg))
+				&& !IsPhysDamageImune(en)
+				&& me.Distance2D(en) < me.GetAttackRange()+50
+				)
+				return true;
+			else	
+				return false;
 			//return 	((en.Health-factdamage(en)-hitDmg)<0 && Math.Abs(en.Health-factdamage(en)-hitDmg)<hitDmg);
 			
 		}
@@ -2555,13 +2667,22 @@ namespace Tinker_Air13
 					var start2s = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(1, HUDInfo.GetHpBarSizeY(targetInf) - 69);
 					var start3 = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(0, HUDInfo.GetHpBarSizeY(targetInf) - 90);
 					var start3s = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(1, HUDInfo.GetHpBarSizeY(targetInf) - 89);
+					var start4 = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(-25, HUDInfo.GetHpBarSizeY(targetInf) - 13);
+					var start4s = HUDInfo.GetHPbarPosition(targetInf) + new Vector2(-24, HUDInfo.GetHpBarSizeY(targetInf) - 12);
+					
 					Drawing.DrawText(EZkill(targetInf) ? alldamage.ToString()+" ez" : alldamage.ToString(), starts, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 					Drawing.DrawText(EZkill(targetInf) ? alldamage.ToString()+" ez" : alldamage.ToString(), start, new Vector2(21, 21), EZkill(targetInf) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					
 					Drawing.DrawText(procastdamage.ToString(), start2s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 					Drawing.DrawText(procastdamage.ToString(), start2, new Vector2(21, 21), (targetInf.Health < procastdamage) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+
 					Drawing.DrawText(factdamage(targetInf).ToString(), start3s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 					Drawing.DrawText(factdamage(targetInf).ToString(), start3, new Vector2(21, 21), (targetInf.Health < factdamage(targetInf)) ? Color.Lime : Color.Red, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
-				
+					
+					Drawing.DrawText("x"+ProcastCounter(targetInf).ToString(), start4s, new Vector2(21, 21), Color.Black, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					Drawing.DrawText("x"+ProcastCounter(targetInf).ToString(), start4, new Vector2(21, 21), Color.White, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
+					
+					
 					//Drawing.DrawText(manafactdamage(targetInf).ToString(), start3+30, new Vector2(21, 21), (me.Mana > manafactdamage(targetInf)) ? Color.Aqua : Color.Blue, FontFlags.AntiAlias | FontFlags.Additive | FontFlags.DropShadow);
 
 				}
@@ -2723,6 +2844,26 @@ namespace Tinker_Air13
 				}
 			}
 				
+				
+         
+			
+			if (Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
+			{
+                Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Combo ON!(Free)" : "Combo ON!(Lock)", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 160 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+                Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Combo ON!(Free)" : "Combo ON!(Lock)", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 160), new Vector2(30, 200), Color.LimeGreen, FontFlags.AntiAlias);
+			}
+			if (Game.IsKeyDown(Menu.Item("Rocket Spam Key").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
+			{
+				Drawing.DrawText("Rocket Spam!", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 185 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+				Drawing.DrawText("Rocket Spam!", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 185), new Vector2(30, 200), Color.Yellow, FontFlags.AntiAlias);
+			}
+			if (Game.IsKeyDown(Menu.Item("March Spam Key").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
+			{
+				Drawing.DrawText("March Spam!", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 210 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+				Drawing.DrawText("March Spam!", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 210), new Vector2(30, 200), Color.White, FontFlags.AntiAlias);
+
+			}
+
 				
 			
 			
