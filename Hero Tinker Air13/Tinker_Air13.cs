@@ -100,15 +100,19 @@ namespace Tinker_Air13
 		
             // Menu Options
             Menu.AddItem(new MenuItem("Combo Key", "Combo Key").SetValue(new KeyBind('D', KeyBindType.Press)));
+            Menu.AddItem(new MenuItem("ComboMode", "Combo Mode"))
+                .SetValue(new StringList(new[] { "Fast", "MpSaving"}));
             Menu.AddItem(new MenuItem("TargetLock", "Target Lock"))
                 .SetValue(new StringList(new[] { "Free", "Lock" }));
+            Menu.AddItem(new MenuItem("Chase", "Chase Toggle").SetValue(new KeyBind('F', KeyBindType.Toggle, false)).SetTooltip("Toggle for chasing"));
+
 			
             Menu.AddItem(new MenuItem("Rocket Spam Key", "Rocket Spam Key").SetValue(new KeyBind('F', KeyBindType.Press)));
             Menu.AddItem(new MenuItem("March Spam Key", "March Spam Key").SetValue(new KeyBind('E', KeyBindType.Press)));
 
 			Menu.AddItem(new MenuItem("autoDisable", "Auto disable/counter enemy").SetValue(true));
 			Menu.AddItem(new MenuItem("autoKillsteal", "Auto killsteal enemy").SetValue(true));
-			Menu.AddItem(new MenuItem("autoSoulring", "Auto SoulRing by manual spell usage").SetValue(true).SetTooltip("Disable it if you have some bugs with rearming or use other auto soulring/items assemblies"));
+			//Menu.AddItem(new MenuItem("autoSoulring", "Auto SoulRing by manual spell usage").SetValue(true).SetTooltip("Disable it if you have some bugs with rearming or use other auto soulring/items assemblies"));
 
             Menu.AddSubMenu(_skills);
             Menu.AddSubMenu(_items);
@@ -147,14 +151,14 @@ namespace Tinker_Air13
 			Game.OnUpdate += AD;
 
 			
-            Player.OnExecuteOrder += Player_OnExecuteAction;
+            //Player.OnExecuteOrder += Player_OnExecuteAction;
 			
             Drawing.OnDraw += Information;
 			Drawing.OnDraw += DrawRanges;
 
         }
 		
-		
+		/*
         private static void Player_OnExecuteAction(Player sender, ExecuteOrderEventArgs args) 
 		{
             me = ObjectMgr.LocalHero;
@@ -235,7 +239,7 @@ namespace Tinker_Air13
                     break;
                 }
             }
-        }
+        }*/
 
 		
 		
@@ -258,7 +262,11 @@ namespace Tinker_Air13
 
 				FindItems();
 
-				if (blink != null && blink.CanBeCasted() && !me.IsChanneling()  && Utils.SleepCheck("Rearms") && (me.Distance2D(Game.MousePosition) > 650+aetherrange+ensage_error))
+				if (blink != null && blink.CanBeCasted() 
+					&& !me.IsChanneling()  
+					&& Utils.SleepCheck("Rearms") 
+					&& (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture") || (me.Distance2D(Game.MousePosition)>1325 && aetherrange!=0))
+					&& (me.Distance2D(Game.MousePosition) > 650+aetherrange+ensage_error))
 				{
 					var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
 					var p = Game.MousePosition;
@@ -302,7 +310,15 @@ namespace Tinker_Air13
 				var enemies = ObjectMgr.GetEntities<Hero>().Where(x => x.IsVisible && x.IsAlive && x.Team == me.GetEnemyTeam() && !x.IsIllusion);
 				foreach (var e in enemies)
 				{
-					if (Rocket != null && Rocket.CanBeCasted() &&  me.Distance2D(e) < 2500 && (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange + ensage_error ) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) && Utils.SleepCheck("Rearms")) //&& me.Mana >= Rocket.ManaCost + 75 
+					if (Rocket != null && Rocket.CanBeCasted() 
+						&&  me.Distance2D(e) < 2500 
+						&& (blink == null || !blink.CanBeCasted() || me.Distance2D(Game.MousePosition) <= 650+ aetherrange + ensage_error || (me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture") && (me.Distance2D(Game.MousePosition)<=1325 || aetherrange==0)))
+						&& !me.IsChanneling() 
+						&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) 
+						&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name) 
+						&& Utils.SleepCheck("Rearms")
+						//&& me.Mana >= Rocket.ManaCost + 75 
+						)
 					{	
 						
 						if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
@@ -329,7 +345,14 @@ namespace Tinker_Air13
                 }
 				
                 //if ((soulring == null || !soulring.CanBeCasted() || !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name)) && (blink != null && me.Distance2D(Game.MousePosition) > 650+ aetherrange + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
-                if ((blink != null && me.Distance2D(Game.MousePosition) > 650+ aetherrange + ensage_error) && (Refresh.Level >= 0 && Refresh.CanBeCasted()) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && Utils.SleepCheck("Rearms") && Utils.SleepCheck("Blinks"))
+                if ((blink != null 
+					&& me.Distance2D(Game.MousePosition) > 650+ aetherrange + ensage_error) 
+					&& (Refresh.Level >= 0 && Refresh.CanBeCasted()) 
+					&& !me.IsChanneling() 
+					&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) 
+					&& Utils.SleepCheck("Rearms") 
+					&& Utils.SleepCheck("Blinks")
+					)
 				{
 					if (soulring != null && soulring.CanBeCasted() && !me.IsChanneling() && (blink!=null && me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error) && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(soulring.Name) && Utils.SleepCheck("Rearms"))
 						soulring.UseAbility();
@@ -344,7 +367,11 @@ namespace Tinker_Air13
 
 				}
 				
-				if ((blink==null || (blink!=null && me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error)) && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)&& Utils.SleepCheck("Rearms")) 
+				if ((blink==null || (blink!=null && me.Distance2D(Game.MousePosition) <= 650+ aetherrange  + ensage_error)) 
+				&& !me.IsChanneling() 
+				&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+				&& !me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture")
+				&& Utils.SleepCheck("Rearms")) 
 				{
 					me.Move(Game.MousePosition);
 				}
@@ -359,7 +386,13 @@ namespace Tinker_Air13
 				
 				
 				
-				if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) && !me.IsChanneling()  && Utils.SleepCheck("Rearms") && (me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error))
+				if (blink != null && blink.CanBeCasted() 
+					&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) 
+					&& !me.IsChanneling()  
+					&& Utils.SleepCheck("Rearms") 
+					&& (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture") || (me.Distance2D(Game.MousePosition)>1325 && aetherrange!=0))
+					&& (me.Distance2D(Game.MousePosition) > 650+ aetherrange  + ensage_error)
+					)
 				{
 					var safeRange = me.FindItem("item_aether_lens") == null ? 1200 : 1400;
 					var p = Game.MousePosition;
@@ -432,13 +465,14 @@ namespace Tinker_Air13
                 target = null;
            
 				
-            if ((Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) && !Game.IsChatOpen)
+            if ((Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) && (!Menu.Item("Chase").GetValue<KeyBind>().Active) && !Game.IsChatOpen)
             {
                 //target = me.ClosestToMouseTarget(2000);
 				
 				var targetLock =
 					Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex;
-				
+
+					
                 if (Utils.SleepCheck("UpdateTarget")
                     && (target == null || !target.IsValid || !target.IsAlive || !target.IsVisible || (target.IsVisible && targetLock == 0)))
                 {
@@ -450,7 +484,7 @@ namespace Tinker_Air13
 				
 				
 				
-                if (target != null && target.IsAlive && !target.IsIllusion && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase) && !CanReflectDamage(target))
+                if (target != null && target.IsAlive && !target.IsIllusion && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
                 {
                     FindItems();
 					
@@ -488,6 +522,8 @@ namespace Tinker_Air13
 						if (blink != null && blink.CanBeCasted() && Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(blink.Name) 
 							&& !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
 							&& (me.Distance2D(Game.MousePosition) > 650+aetherrange + ensage_error)  
+							&& (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture") || (me.Distance2D(Game.MousePosition)>1325 && aetherrange!=0))
+
 							&& (target.NetworkPosition.Distance2D(me) <= 1200 + 650 + ensage_error*2 +aetherrange*2)
 							&& Utils.SleepCheck("Blinks")
 							// && Utils.SleepCheck("Rearms"))
@@ -651,6 +687,30 @@ namespace Tinker_Air13
 							else
 								elsecount += 1;
 
+								
+							var comboMode =
+								Menu.Item("ComboMode").GetValue<StringList>().SelectedIndex;
+							if (Rocket.Level > 0 && Rocket.CanBeCasted() 
+								&& target.NetworkPosition.Distance2D(me) <= 2500
+								&& (!EzkillCheck)// || target.NetworkPosition.Distance2D(me) >= 800+aetherrange + ensage_error)
+								&& !OneHitLeft(target)
+								&& magicimune  
+								&& (!target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect") || me.IsMagicImmune())
+								&& (!target.Modifiers.Any(y => y.Name == "modifier_nyx_assassin_spiked_carapace") || me.IsMagicImmune())
+								&& (((veil == null || !veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name))))// && target.NetworkPosition.Distance2D(me) <= 1500 + aetherrange + ensage_error))// || target.NetworkPosition.Distance2D(me) > 1500 + aetherrange + ensage_error)
+								&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name))))//&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error)) //|| target.NetworkPosition.Distance2D(me) > 800+aetherrange + ensage_error)
+								&& (Laser == null ||  !Laser.CanBeCasted() || comboMode==0)
+								&& (dagon == null ||  !dagon.CanBeCasted() || comboMode==0)
+								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
+								&& Utils.SleepCheck("Blinks")
+
+							)
+							{
+								Rocket.UseAbility();
+							}
+							else
+								elsecount += 1; 
+						
 						
 
 							/*
@@ -673,10 +733,10 @@ namespace Tinker_Air13
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
 								&& !OneHitLeft(target)
-								&& !CanReflectDamage(target)
+								&& (!CanReflectDamage(target) || me.IsMagicImmune())
 								&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
-								&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
+								//&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
 								&& Utils.SleepCheck("Blinks")
 
 								)
@@ -693,11 +753,11 @@ namespace Tinker_Air13
 								&& (ethereal == null || (ethereal!=null && !IsCasted(ethereal) && !ethereal.CanBeCasted()) || target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name)) 
 								//&& (!silence.CanBeCasted() || target.Ishexed())
 								&& magicimune
-								&& !CanReflectDamage(target)
+								&& (!CanReflectDamage(target) || me.IsMagicImmune())
 								&& !OneHitLeft(target)
 								&& target.NetworkPosition.Distance2D(me) <= dagondistance[dagon.Level - 1]+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
-								&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
+								//&& !target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect")
 								&& Utils.SleepCheck("Blinks")
 								)
 								dagon.UseAbility(target);
@@ -727,6 +787,7 @@ namespace Tinker_Air13
 								&& !EzkillCheck 
 								&& !OneHitLeft(target)
 								&& magicimune 
+								&& (!CanReflectDamage(target) || me.IsMagicImmune())
 								&& target.NetworkPosition.Distance2D(me) <= 650+aetherrange + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& Utils.SleepCheck("Blinks")
@@ -742,31 +803,14 @@ namespace Tinker_Air13
 							}
 							else
 								elsecount += 1;*/
-								
-							if (Rocket.Level > 0 && Rocket.CanBeCasted() 
-								&& target.NetworkPosition.Distance2D(me) <= 2500
-								&& (!EzkillCheck)// || target.NetworkPosition.Distance2D(me) >= 800+aetherrange + ensage_error)
-								&& !OneHitLeft(target)
-								&& magicimune  
-								&& Menu.Item("Skills: ").GetValue<AbilityToggler>().IsEnabled(Rocket.Name)
-								&& (((veil == null || !veil.CanBeCasted() || target.Modifiers.Any(y => y.Name == "modifier_item_veil_of_discord_debuff") | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(veil.Name))))// && target.NetworkPosition.Distance2D(me) <= 1500 + aetherrange + ensage_error))// || target.NetworkPosition.Distance2D(me) > 1500 + aetherrange + ensage_error)
-								&& (((ethereal == null || (ethereal!=null && !ethereal.CanBeCasted()) || IsCasted(ethereal) /*|| target.Modifiers.Any(y => y.Name == "modifier_item_ethereal_blade_ethereal")*/ | !Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(ethereal.Name))))//&& target.NetworkPosition.Distance2D(me) <= 800+aetherrange + ensage_error)) //|| target.NetworkPosition.Distance2D(me) > 800+aetherrange + ensage_error)
-								&& (Laser == null ||  !Laser.CanBeCasted())
-								&& (dagon == null ||  !dagon.CanBeCasted())
-								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
-								&& Utils.SleepCheck("Blinks")
 
-							)
-							{
-								Rocket.UseAbility();
-							}
-							else
-								elsecount += 1; 
 								
 							if (shiva != null && shiva.CanBeCasted() 
 								&& !EzkillCheck 
 								&& magicimune
 								&& !OneHitLeft(target)
+								&& (!target.Modifiers.Any(y => y.Name == "modifier_item_blade_mail_reflect") || me.IsMagicImmune())
+								&& (!target.Modifiers.Any(y => y.Name == "modifier_nyx_assassin_spiked_carapace") || me.IsMagicImmune())
 								&& target.NetworkPosition.Distance2D(me) <= 900 + ensage_error
 								&& !(target.Modifiers.Any(y => y.Name == "modifier_teleporting") && IsEulhexFind())
 								&& Menu.Item("Items: ").GetValue<AbilityToggler>().IsEnabled(shiva.Name)
@@ -805,11 +849,15 @@ namespace Tinker_Air13
 								if (Refresh.Level == 3)
 									Utils.Sleep(760, "Rearm");
 							}
-							else
+							else if (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture"))
 							{
-								if (!me.IsChanneling() && me.CanAttack() && !target.IsAttackImmune() && Utils.SleepCheck("Rearm"))
+								if (!me.IsChanneling() && me.CanAttack() 
+									&& !target.IsAttackImmune() 
+									&& (!target.Modifiers.Any(y => y.Name == "modifier_nyx_assassin_spiked_carapace") || me.IsMagicImmune())
+									&& Utils.SleepCheck("Rearm")
+									)
 									{
-										if (me.Distance2D(target) > me.GetAttackRange()-100)
+										if (me.Distance2D(target) > me.GetAttackRange()-100 )
 											Orbwalking.Orbwalk(target);
 										else 
 											me.Attack(target);
@@ -825,10 +873,58 @@ namespace Tinker_Air13
                 }
                 else
                 {
-                    if (!me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
+                    if (!me.IsChanneling() 
+						&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+						&& !me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture")
+						)
                         me.Move(Game.MousePosition);
                 }
             }
+			
+			
+            if ((Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) && (Menu.Item("Chase").GetValue<KeyBind>().Active) && !Game.IsChatOpen)
+            {
+				
+				var targetLock =
+					Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex;
+
+                if (Utils.SleepCheck("UpdateTarget")
+                    && (target == null || !target.IsValid || !target.IsAlive || !target.IsVisible || (target.IsVisible && targetLock == 0)))
+                {
+                    target = TargetSelector.ClosestToMouse(me, 2000);
+                    Utils.Sleep(250, "UpdateTarget");
+                }
+				
+                if (target != null && target.IsAlive && !target.IsIllusion && !me.IsChanneling() && !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase))
+                {
+					if (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture"))
+					{
+						if (!me.IsChanneling() && me.CanAttack() 
+							&& !target.IsAttackImmune() 
+							&& (!target.Modifiers.Any(y => y.Name == "modifier_nyx_assassin_spiked_carapace") || me.IsMagicImmune())
+							&& Utils.SleepCheck("Rearm")
+							)
+							{
+								if (me.Distance2D(target) > me.GetAttackRange()-100 )
+									Orbwalking.Orbwalk(target);
+								else 
+									me.Attack(target);
+							}
+						else
+							me.Move(Game.MousePosition, false);
+					}	
+							
+                }
+                else
+                {
+                    if (!me.IsChanneling() 
+						&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+						&& !me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture")
+						)
+                        me.Move(Game.MousePosition);
+                }
+            }
+			
 
         }
 		
@@ -1542,12 +1638,17 @@ namespace Tinker_Air13
 				}
 				
 			
-				if (Menu.Item("autoKillsteal").GetValue<bool>() && me.IsAlive && me.IsVisible && !Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key))
+				if (Menu.Item("autoKillsteal").GetValue<bool>() 
+					&& me.IsAlive 
+					&& me.IsVisible 
+					&& (Menu.Item("Chase").GetValue<KeyBind>().Active || !Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key))
+					 
+					)
 				{
 				
 					if (e.Health < factdamage(e)
 						&& me.Mana >= manafactdamage(e)
-						&& !CanReflectDamage(e)
+						&& (!CanReflectDamage(e) || me.IsMagicImmune())
 						//&& (!e.FindSpell("abaddon_borrowed_time").CanBeCasted() && !e.Modifiers.Any(y => y.Name == "modifier_abaddon_borrowed_time_damage_redirect"))
 						&& !e.Modifiers.Any(y => y.Name == "modifier_abaddon_borrowed_time_damage_redirect")
 						&& !e.Modifiers.Any(y => y.Name == "modifier_obsidian_destroyer_astral_imprisonment_prison")
@@ -2086,7 +2187,7 @@ namespace Tinker_Air13
 
         static bool CanReflectDamage(Hero x)
         {
-            if (x.Modifiers.Any(m => (m.Name == "modifier_item_blade_mail_reflect" ) || (m.Name == "modifier_item_lotus_orb_active")))
+            if (x.Modifiers.Any(m => (m.Name == "modifier_item_blade_mail_reflect" ) || (m.Name == "modifier_nyx_assassin_spiked_carapace") || (m.Name == "modifier_item_lotus_orb_active")))
                 return true;
             else
                 return false;
@@ -2123,7 +2224,8 @@ namespace Tinker_Air13
 				|| x.Name == "modifier_brewmaster_drunken_haze"
                 || x.Name == "modifier_pugna_decrepify"
 				|| x.Name == "modifier_item_ethereal_blade_ethereal")
-                || v.Modifiers.Any(x => x.Name == "modifier_omninight_guardian_angel"
+                || v.Modifiers.Any(x => x.Name == "modifier_omniknight_guardian_angel"
+									|| x.Name == "modifier_nyx_assassin_spiked_carapace"
 									|| x.Name == "modifier_pugna_decrepify"
 									|| x.Name == "modifier_windrunner_windrun"
 									|| x.Name == "modifier_winter_wyverny_cold_embrace"
@@ -2854,8 +2956,11 @@ namespace Tinker_Air13
 			
 			if (Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
 			{
-                Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Combo ON!(Free)" : "Combo ON!(Lock)", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 160 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
-                Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Combo ON!(Free)" : "Combo ON!(Lock)", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 160), new Vector2(30, 200), Color.LimeGreen, FontFlags.AntiAlias);
+                //Drawing.DrawText(Menu.Item("Chase").GetValue<KeyBind>().Active == true ? "Chasing" : "Comboing", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 160 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+                //Drawing.DrawText(Menu.Item("Chase").GetValue<KeyBind>().Active == true ? "Chasing" : "Comboing", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 160), new Vector2(30, 200), Menu.Item("Chase").GetValue<KeyBind>().Active == true ? Color.Red : Color.LimeGreen, FontFlags.AntiAlias);
+			    Drawing.DrawText(" ON!", new Vector2(HUDInfo.ScreenSizeX() / 2 +2+150, HUDInfo.ScreenSizeY() / 2 + 235 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+                Drawing.DrawText(" ON!", new Vector2(HUDInfo.ScreenSizeX() / 2+150, HUDInfo.ScreenSizeY() / 2 + 235), new Vector2(30, 200), Menu.Item("Chase").GetValue<KeyBind>().Active == true ? Color.Red : Color.LimeGreen, FontFlags.AntiAlias);
+			
 			}
 			if (Game.IsKeyDown(Menu.Item("Rocket Spam Key").GetValue<KeyBind>().Key) && !Game.IsChatOpen)
 			{
@@ -2869,8 +2974,17 @@ namespace Tinker_Air13
 
 			}
 
-				
+			Drawing.DrawText(Menu.Item("Chase").GetValue<KeyBind>().Active == true ? "Chase Mode" : "Combo Mode", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 235 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+			Drawing.DrawText(Menu.Item("Chase").GetValue<KeyBind>().Active == true ? "Chase Mode" : "Combo Mode", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 235), new Vector2(30, 200), Menu.Item("Chase").GetValue<KeyBind>().Active == true ? Color.Red : Color.LimeGreen, FontFlags.AntiAlias);
 			
+			Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Target: Free" : "Target: Lock", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 285 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+			Drawing.DrawText(Menu.Item("TargetLock").GetValue<StringList>().SelectedIndex==0 ? "Target: Free" : "Target: Lock", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 285), new Vector2(30, 200), Color.White, FontFlags.AntiAlias);
+			
+			if (Menu.Item("autoKillsteal").GetValue<bool>())
+			{
+				Drawing.DrawText((Menu.Item("Chase").GetValue<KeyBind>().Active == true || !Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) ? "KS: on" : "KS: off", new Vector2(HUDInfo.ScreenSizeX() / 2 +2, HUDInfo.ScreenSizeY() / 2 + 260 +2), new Vector2(30, 200), Color.Black, FontFlags.AntiAlias);
+				Drawing.DrawText((Menu.Item("Chase").GetValue<KeyBind>().Active == true || !Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) ? "KS: on" : "KS: off", new Vector2(HUDInfo.ScreenSizeX() / 2, HUDInfo.ScreenSizeY() / 2 + 260), new Vector2(30, 200),(Menu.Item("Chase").GetValue<KeyBind>().Active == true || !Game.IsKeyDown(Menu.Item("Combo Key").GetValue<KeyBind>().Key)) ? Color.LimeGreen : Color.Red, FontFlags.AntiAlias);
+			}
 			
         
 		}
