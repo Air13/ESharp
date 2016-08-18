@@ -91,63 +91,69 @@ namespace ShadowFiendHelper
 		
 		public static void DrawRanges(EventArgs args)
         {
-			
-				if (menurange_coil)
-				{
-
-					if (rangedisplay_coilQ == null)
-					{
-   
-						rangedisplay_coilQ = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", me);     
-						rangedisplay_coilQ.SetControlPoint(1, me.NetworkPosition);
-						rangedisplay_coilQ.SetControlPoint(2, FindVector(me.NetworkPosition, me.Rotation, 700));
-
-
-					}
-					else 
-					{
-						rangedisplay_coilQ.SetControlPoint(1, me.NetworkPosition);
-						rangedisplay_coilQ.SetControlPoint(2, FindVector(me.NetworkPosition, me.Rotation, 700));
-					} 
-
+			if (!Game.IsInGame || Game.IsWatchingGame)// || me.ClassID != ClassID.CDOTA_Unit_Hero_Nevermore)
+                return;
+            me = ObjectMgr.LocalHero;
+            if (me == null)
+                return;
 		
+			if (menurange_coil)
+			{
+
+				if (rangedisplay_coilQ == null)
+				{
+
+					rangedisplay_coilQ = new ParticleEffect(@"particles\ui_mouseactions\range_finder_directional_b.vpcf", me);     
+					rangedisplay_coilQ.SetControlPoint(1, me.NetworkPosition);
+					rangedisplay_coilQ.SetControlPoint(2, FindVector(me.NetworkPosition, me.Rotation, 700));
+
+
 				}
-				else if (rangedisplay_coilQ!=null)
+				else 
 				{
-					rangedisplay_coilQ.Dispose();
-					rangedisplay_coilQ = null;
-				}			
-				
-				
-				
+					rangedisplay_coilQ.SetControlPoint(1, me.NetworkPosition);
+					rangedisplay_coilQ.SetControlPoint(2, FindVector(me.NetworkPosition, me.Rotation, 700));
+				} 
+
+	
+			}
+			else if (rangedisplay_coilQ!=null)
+			{
+				rangedisplay_coilQ.Dispose();
+				rangedisplay_coilQ = null;
+			}			
 			
 			
 			
-			
-			
-				if (menurange_atck)
+		
+		
+		
+		
+		
+			if (menurange_atck)
+			{
+				if(rangedisplay_atck == null)
 				{
-					if(rangedisplay_atck == null)
-					{
-						rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");	
-						range_atck = me.GetAttackRange() + 100;					
-						rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
-						rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
-					}
-					if (range_atck != (me.GetAttackRange() + 100))
-					{
-						range_atck = me.GetAttackRange() + 100;
-						rangedisplay_atck.Dispose();
-						rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
-						rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
-						rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
-					}
+					rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");	
+					range_atck = me.GetAttackRange() + 100;					
+					rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
+					rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
 				}
-				else if (rangedisplay_atck!=null)
+				
+				if (range_atck != (me.GetAttackRange() + 100))
 				{
+					range_atck = me.GetAttackRange() + 100;
 					rangedisplay_atck.Dispose();
-					rangedisplay_atck = null;
+					rangedisplay_atck = me.AddParticleEffect(@"particles\ui_mouseactions\drag_selected_ring.vpcf");
+					rangedisplay_atck.SetControlPoint(1, new Vector3(255, 0, 0));
+					rangedisplay_atck.SetControlPoint(2, new Vector3(range_atck, 255, 0));
 				}
+			}
+			else if (rangedisplay_atck!=null)
+			{
+				rangedisplay_atck.Dispose();
+				rangedisplay_atck = null;
+			}
 
 		
 
