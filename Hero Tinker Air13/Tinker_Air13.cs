@@ -1659,6 +1659,12 @@ namespace Tinker_Air13
 						&& !e.Modifiers.Any(y => y.Name == "modifier_shadow_demon_disruption")
 						&& !e.Modifiers.Any(y => y.Name == "modifier_tusk_snowball_movement")
 						&& !me.Modifiers.Any(y => y.Name == "modifier_pugna_nether_ward_aura")
+						&& !me.IsSilenced() 
+						&& !me.IsHexed() 
+						&& !me.Modifiers.Any(y => y.Name == "modifier_doom_bringer_doom") 
+						&& !me.Modifiers.Any(y => y.Name == "modifier_riki_smoke_screen")
+						&& !me.Modifiers.Any(y => y.Name == "modifier_disruptor_static_storm")
+
 
 						)
 						{
