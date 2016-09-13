@@ -851,7 +851,9 @@ namespace Tinker_Air13
 							}
 							else if (!me.Modifiers.Any(y => y.Name == "modifier_bloodseeker_rupture"))
 							{
-								if (!me.IsChanneling() && me.CanAttack() 
+								if (!me.IsChanneling() 
+									&& !me.Spellbook.Spells.Any(x => x.IsInAbilityPhase)
+									&& me.CanAttack() 
 									&& !target.IsAttackImmune() 
 									&& (!target.Modifiers.Any(y => y.Name == "modifier_nyx_assassin_spiked_carapace") || me.IsMagicImmune())
 									&& Utils.SleepCheck("Rearm")
@@ -862,8 +864,8 @@ namespace Tinker_Air13
 										else 
 											me.Attack(target);
 									}
-								else
-									me.Move(Game.MousePosition, false);
+								//else
+								//	me.Move(Game.MousePosition, false);
 							}
 							
 							
